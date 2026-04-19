@@ -30,3 +30,45 @@ export function generateSlug(title: string): string {
     .replace(/-+/g, '-') // collapse multiple hyphens
     .replace(/^-|-$/g, ''); // trim leading/trailing hyphens
 }
+
+/**
+ * Calculate date range for a given period (week, month, quarter, year).
+ * Week starts on Monday (French convention).
+ */
+export function getDateRangeForPeriod(
+  period: "week" | "month" | "quarter" | "year",
+  referenceDate?: Date
+): { startDate: Date; endDate: Date } {
+  const ref = referenceDate ? new Date(referenceDate) : new Date();
+
+  switch (period) {
+    case "week": {
+      const day = ref.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      const startDate = new Date(ref);
+      startDate.setDate(ref.getDate() - diffToMonday);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+    case "month": {
+      const startDate = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
+      const endDate = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+    case "quarter": {
+      const quarter = Math.floor(ref.getMonth() / 3);
+      const startMonth = quarter * 3;
+      const startDate = new Date(ref.getFullYear(), startMonth, 1, 0, 0, 0, 0);
+      const endDate = new Date(ref.getFullYear(), startMonth + 3, 0, 23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+    case "year": {
+      const startDate = new Date(ref.getFullYear(), 0, 1, 0, 0, 0, 0);
+      const endDate = new Date(ref.getFullYear(), 11, 31, 23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+  }
+}

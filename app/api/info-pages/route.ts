@@ -36,6 +36,9 @@ export async function GET(request: NextRequest) {
         id: infoPages.id,
         title: infoPages.title,
         slug: infoPages.slug,
+        category: infoPages.category,
+        imageUrl: infoPages.imageUrl,
+        content: infoPages.content,
         status: infoPages.status,
         updatedAt: infoPages.updatedAt,
       })

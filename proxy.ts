@@ -2,54 +2,86 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-// Routes that don't require authentication
+// ── Route definitions ──
+
+// Public routes (no auth needed)
 const publicRoutes = [
   "/",
   "/login",
   "/register",
   "/reset-password",
   "/reset-password/confirm",
+  "/a-propos",
+  "/sante",
+  "/articles",
+  "/respiration",
+  "/confidentialite",
+  "/mentions-legales",
 ];
 
-// Path prefixes that are always public
-const publicPrefixes = ["/info/", "/api/auth/"];
+// Public prefixes
+const publicPrefixes = ["/info/", "/api/auth/", "/api/info-pages", "/api/favorites"];
 
-// Path prefixes that require authentication
-const authPrefixes = ["/tracker"];
-const authRoutes = ["/profile"];
-
-// Path prefixes that require admin role
+// Admin-only page routes
 const adminPrefixes = ["/admin"];
 
-// Protected API routes (require authentication)
-const protectedApiPrefixes = ["/api/tracker", "/api/users"];
+// Auth-required page routes (logged in users only, NOT admin)
+const authRoutes = ["/profile"];
 
-// Admin-only API route + method combinations
+// Protected API routes (require auth)
+const protectedApiPrefixes = ["/api/users", "/api/favorites"];
+
+// Admin-only API rules
 const adminApiRules: { prefix: string; methods?: string[] }[] = [
   { prefix: "/api/users" },
   { prefix: "/api/info-pages", methods: ["POST", "PUT", "DELETE"] },
   { prefix: "/api/menu-items", methods: ["PUT"] },
-  { prefix: "/api/emotions", methods: ["POST", "PUT", "PATCH"] },
 ];
+
+// ── Rate limiting (simple in-memory) ──
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_LOGIN_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record) return false;
+  if (now - record.lastAttempt > LOGIN_WINDOW_MS) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+  return record.count >= MAX_LOGIN_ATTEMPTS;
+}
+
+function recordLoginAttempt(ip: string) {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record || now - record.lastAttempt > LOGIN_WINDOW_MS) {
+    loginAttempts.set(ip, { count: 1, lastAttempt: now });
+  } else {
+    record.count++;
+    record.lastAttempt = now;
+  }
+}
+
+// ── Helpers ──
 
 function isPublicRoute(pathname: string): boolean {
   if (publicRoutes.includes(pathname)) return true;
-  if (publicPrefixes.some((prefix) => pathname.startsWith(prefix))) return true;
-  return false;
-}
-
-function isAuthRoute(pathname: string): boolean {
-  if (authRoutes.includes(pathname)) return true;
-  if (authPrefixes.some((prefix) => pathname.startsWith(prefix))) return true;
-  return false;
+  return publicPrefixes.some((p) => pathname.startsWith(p));
 }
 
 function isAdminRoute(pathname: string): boolean {
-  return adminPrefixes.some((prefix) => pathname.startsWith(prefix));
+  return adminPrefixes.some((p) => pathname.startsWith(p));
+}
+
+function isAuthRoute(pathname: string): boolean {
+  return authRoutes.includes(pathname);
 }
 
 function isProtectedApi(pathname: string): boolean {
-  return protectedApiPrefixes.some((prefix) => pathname.startsWith(prefix));
+  return protectedApiPrefixes.some((p) => pathname.startsWith(p));
 }
 
 function isAdminApi(pathname: string, method: string): boolean {
@@ -60,73 +92,95 @@ function isAdminApi(pathname: string, method: string): boolean {
   });
 }
 
+function getClientIp(request: NextRequest): string {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip")
+    || "unknown";
+}
+
+// ── Security headers ──
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  return response;
+}
+
+// ── Main proxy ──
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  // Allow public routes
-  if (isPublicRoute(pathname)) {
-    return NextResponse.next();
+  // Rate limit login attempts
+  if (pathname === "/api/auth/callback/credentials" && method === "POST") {
+    const ip = getClientIp(request);
+    if (isRateLimited(ip)) {
+      return addSecurityHeaders(
+        NextResponse.json(
+          { error: "Trop de tentatives. Réessayez dans 15 minutes." },
+          { status: 429 }
+        )
+      );
+    }
+    recordLoginAttempt(ip);
   }
 
-  // Get the JWT token from the request
+  // Public routes — allow (but redirect admin to dashboard)
+  if (isPublicRoute(pathname)) {
+    if (!pathname.startsWith("/api/")) {
+      const pubToken = await getToken({ req: request });
+      if (pubToken && pubToken.role === "administrateur") {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+    }
+    return addSecurityHeaders(NextResponse.next());
+  }
+
+  // Get JWT token
   const token = await getToken({ req: request });
 
-  // Handle protected API routes
+  // ── API routes ──
   if (pathname.startsWith("/api/")) {
-    // Check if this API route requires admin access
+    // Admin API
     if (isAdminApi(pathname, method)) {
-      if (!token) {
-        return NextResponse.json(
-          { error: "Non authentifié" },
-          { status: 401 }
-        );
-      }
-      if (token.role !== "administrateur") {
-        return NextResponse.json(
-          { error: "Accès interdit" },
-          { status: 403 }
-        );
-      }
-      return NextResponse.next();
+      if (!token) return addSecurityHeaders(NextResponse.json({ error: "Non autorisé" }, { status: 401 }));
+      if (token.role !== "administrateur") return addSecurityHeaders(NextResponse.json({ error: "Accès interdit" }, { status: 403 }));
+      return addSecurityHeaders(NextResponse.next());
     }
-
-    // Check if this API route requires authentication
+    // Protected API
     if (isProtectedApi(pathname)) {
-      if (!token) {
-        return NextResponse.json(
-          { error: "Non authentifié" },
-          { status: 401 }
-        );
-      }
-      return NextResponse.next();
+      if (!token) return addSecurityHeaders(NextResponse.json({ error: "Non autorisé" }, { status: 401 }));
+      return addSecurityHeaders(NextResponse.next());
     }
-
-    // Other API routes pass through
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
-  // Handle admin page routes
+  // ── Admin pages — only admin role ──
   if (isAdminRoute(pathname)) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-    if (token.role !== "administrateur") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-    return NextResponse.next();
+    if (!token) return NextResponse.redirect(new URL("/login", request.url));
+    if (token.role !== "administrateur") return NextResponse.redirect(new URL("/", request.url));
+    // Admin cannot access public pages — they stay in /admin
+    return addSecurityHeaders(NextResponse.next());
   }
 
-  // Handle authenticated page routes
+  // ── Auth-required pages ──
   if (isAuthRoute(pathname)) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-    return NextResponse.next();
+    if (!token) return NextResponse.redirect(new URL("/login", request.url));
+    // Admin users redirect to admin dashboard
+    if (token.role === "administrateur") return NextResponse.redirect(new URL("/admin", request.url));
+    return addSecurityHeaders(NextResponse.next());
   }
 
-  // All other routes pass through
-  return NextResponse.next();
+  // ── All other routes ──
+  // If admin user tries to access public/auth pages, redirect to admin dashboard
+  if (token && token.role === "administrateur" && !pathname.startsWith("/api/")) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  return addSecurityHeaders(NextResponse.next());
 }
 
 export const config = {

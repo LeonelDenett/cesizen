@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+.env.local
+playwright-report
+test-results
+__tests__
+*.md
+!README.md
+.kiro
+.vscode

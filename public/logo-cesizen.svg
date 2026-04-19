@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 350" fill="none">
+  <!-- Meditation figure -->
+  <g stroke="#2D9F4E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Head dot -->
+    <circle cx="130" cy="42" r="12" fill="#2D9F4E"/>
+    <!-- Diamond body -->
+    <path d="M130 72 L160 110 L130 148 L100 110 Z"/>
+    <!-- Infinity arms -->
+    <path d="M70 170 C70 140 100 140 130 160 C160 140 190 140 190 170 C190 200 160 200 130 180 C100 200 70 200 70 170 Z"/>
+  </g>
+  <!-- CESI text -->
+  <text x="220" y="105" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="72" fill="#2D9F4E">CESI</text>
+  <!-- ZEN text -->
+  <text x="220" y="180" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="72" fill="#F5C542">ZEN</text>
+  <!-- Tagline -->
+  <text x="200" y="240" font-family="Arial, sans-serif" font-weight="700" font-size="22" fill="#F5C542" text-anchor="middle" transform="translate(0,0)">
+    <tspan x="200" dy="0">L'APPLICATION DE VOTRE</tspan>
+    <tspan x="200" dy="30">SANTÉ MENTALE</tspan>
+  </text>
+</svg>

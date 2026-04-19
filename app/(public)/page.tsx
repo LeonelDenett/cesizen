@@ -1,93 +1,120 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import RgpdCard from '@/components/ui/RgpdModal';
 
 export default function HomePage() {
   return (
-    <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-blue-50 to-white px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-            CESIZen — Votre santé mentale
-          </h1>
-          <p className="mt-4 text-lg text-gray-600 sm:text-xl">
-            Prenez soin de votre bien-être émotionnel grâce à des outils de
-            suivi et des ressources fiables sur la gestion du stress.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link
-              href="/register"
-              className="w-full rounded-lg bg-blue-600 px-6 py-3 text-center text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-            >
-              Créer un compte
-            </Link>
-            <Link
-              href="/login"
-              className="w-full rounded-lg border border-gray-300 bg-white px-6 py-3 text-center text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
-            >
-              Se connecter
-            </Link>
+    <div className="bg-gradient-to-br from-green-50 via-white to-green-100/30 min-h-screen relative overflow-hidden">
+      {/* Decorative circles */}
+      <div className="absolute top-20 -left-20 w-72 h-72 bg-green-200/30 rounded-full blur-3xl" />
+      <div className="absolute top-96 right-0 w-96 h-96 bg-green-100/40 rounded-full blur-3xl" />
+      <div className="absolute bottom-40 -left-32 w-80 h-80 bg-yellow-100/30 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-20 w-64 h-64 bg-green-200/20 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-green-300/15 rounded-full blur-2xl" />
+
+      <div className="relative mx-auto max-w-6xl px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
+
+        {/* Bento Grid: 1 col mobile, 2 tablet, 3 desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+
+          {/* 1. Logo — always first */}
+          <div className="rounded-3xl bg-green-950 border border-green-800 shadow-sm p-8 flex items-center justify-center min-h-[220px] sm:min-h-[260px]">
+            <Image
+              src="/logo-cesizen.svg"
+              alt="CESIZen"
+              width={220}
+              height={190}
+              priority
+              className="h-auto w-full max-w-[180px] sm:max-w-[200px]"
+            />
           </div>
-        </div>
-      </section>
 
-      {/* Features */}
-      <section className="px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
-            Nos fonctionnalités
-          </h2>
-          <p className="mt-2 text-center text-gray-600">
-            Des outils conçus pour vous accompagner au quotidien.
-          </p>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {/* 2. Hero text — spans 2 cols on desktop */}
+          <div className="lg:col-span-2 rounded-3xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 mb-4">
+                ✓ Recommandé par des experts de santé
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Tracker d&apos;émotions
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">
-                Enregistrez vos émotions au quotidien et suivez votre évolution
-                grâce à un journal de bord personnel.
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gray-900">
+                Retrouvez votre{' '}
+                <span className="relative inline-block">
+                  <span className="relative z-10 italic text-green-700">équilibre</span>
+                  <span className="absolute bottom-1 left-0 right-0 h-3 bg-yellow-200/60 -z-0 rounded" />
+                </span>{' '}
+                intérieur.
+              </h1>
+              <p className="mt-4 text-base sm:text-lg text-gray-600 leading-relaxed max-w-lg">
+                CESIZen vous accompagne chaque jour pour mieux comprendre vos émotions et cultiver votre bien-être mental.
               </p>
             </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Informations
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">
-                Consultez des ressources fiables sur la santé mentale, la
-                gestion du stress et la prévention.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:col-span-2 lg:col-span-1">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Rapports personnalisés
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">
-                Visualisez vos tendances émotionnelles par semaine, mois,
-                trimestre ou année.
-              </p>
+            <div className="mt-6 flex flex-col gap-3 lg:flex-row">
+              <Link href="/respiration"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-700 px-6 py-3 text-sm font-semibold text-white hover:bg-green-800 transition-colors">
+                Exercice de respiration →
+              </Link>
+              <Link href="/a-propos"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                À propos de CESIZen
+              </Link>
             </div>
           </div>
+
+          {/* 3+4. Feature cards — full width row, 2 cols */}
+          <div className="sm:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            <Link href="/respiration"
+              className="group rounded-3xl bg-gradient-to-br from-green-100 to-green-200 shadow-sm p-6 hover:shadow-lg transition-all flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-300/30 rounded-full -translate-y-10 translate-x-10" />
+              <div className="relative">
+                <h3 className="text-xl font-bold text-green-900">Exercices de respiration</h3>
+                <p className="mt-2 text-sm text-green-800/70 flex-1">Cohérence cardiaque, relaxation et apaisement — laissez-vous guider par le souffle.</p>
+                <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-green-900/15 px-4 py-2 text-sm font-semibold text-green-900 group-hover:bg-green-900/25 transition-colors">
+                  Commencer →
+                </span>
+              </div>
+            </Link>
+
+            <Link href="/sante"
+              className="group rounded-3xl bg-gradient-to-br from-red-50 to-red-100 shadow-sm p-6 hover:shadow-lg transition-all flex flex-col relative overflow-hidden">
+              <div className="absolute bottom-0 left-0 w-28 h-28 bg-red-200/40 rounded-full translate-y-10 -translate-x-10" />
+              <div className="relative">
+                <h3 className="text-xl font-bold text-red-900">❤️ Informations santé</h3>
+                <p className="mt-2 text-sm text-red-800/70 flex-1">Numéros d&apos;urgence, ressources professionnelles et informations essentielles sur la santé mentale.</p>
+                <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-red-900/10 px-4 py-2 text-sm font-semibold text-red-900 group-hover:bg-red-900/20 transition-colors">
+                  En savoir plus →
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* 5. Conseil du jour — full width separator */}
+          <div className="sm:col-span-2 lg:col-span-3 rounded-3xl bg-green-950 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="text-4xl sm:text-5xl">🌿</div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-green-300 mb-1">Conseil du jour</p>
+              <p className="text-white font-medium">Pratiquez la marche consciente</p>
+              <p className="text-green-200 text-sm mt-1">Accordez-vous 10 minutes pour marcher sans distraction. Portez votre attention sur le rythme de votre respiration.</p>
+            </div>
+          </div>
+
+          {/* 6+7. Articles + RGPD — full width row, 2 cols */}
+          <div className="sm:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            <Link href="/articles"
+              className="group rounded-3xl bg-white border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-yellow-200 transition-all flex flex-col">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600 mb-4 group-hover:bg-yellow-200 transition-colors">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 group-hover:text-yellow-700">Articles santé</h3>
+              <p className="mt-2 text-sm text-gray-500 flex-1">Alimentation, sport, méditation — des articles validés par des experts.</p>
+              <span className="mt-4 text-sm font-medium text-yellow-600 inline-flex items-center gap-1">Lire les articles →</span>
+            </Link>
+
+            <RgpdCard />
+          </div>
+
         </div>
-      </section>
+      </div>
     </div>
   );
 }

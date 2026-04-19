@@ -43,10 +43,24 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
+        // Input validation
+        const email = credentials.email.trim().toLowerCase();
+        const password = credentials.password;
+
+        // Reject obviously invalid inputs
+        if (email.length > 254 || password.length > 128 || password.length < 1) {
+          return null;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return null;
+        }
+
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email))
+          .where(eq(users.email, email))
           .limit(1);
 
         if (!user) {
