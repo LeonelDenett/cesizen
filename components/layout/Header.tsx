@@ -6,15 +6,20 @@ import MobileNav from './MobileNav';
 import AuthStatus from './AuthStatus';
 
 export default async function Header() {
-  const items = await db
-    .select({
-      id: menuItems.id,
-      label: menuItems.label,
-      slug: infoPages.slug,
-    })
-    .from(menuItems)
-    .innerJoin(infoPages, eq(menuItems.pageId, infoPages.id))
-    .orderBy(asc(menuItems.displayOrder));
+  let items: { id: string; label: string; slug: string }[] = [];
+  try {
+    items = await db
+      .select({
+        id: menuItems.id,
+        label: menuItems.label,
+        slug: infoPages.slug,
+      })
+      .from(menuItems)
+      .innerJoin(infoPages, eq(menuItems.pageId, infoPages.id))
+      .orderBy(asc(menuItems.displayOrder));
+  } catch {
+    // DB not available (build time on Vercel)
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-green-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
