@@ -19,9 +19,9 @@ export default function RgpdCard() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
+          <div className="relative w-full sm:max-w-lg sm:mx-4 max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white p-6 sm:p-8 shadow-xl animate-fade-slide-up">
             <button type="button" onClick={() => setOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" aria-label="Fermer">
               <span className="material-symbols-rounded text-xl">close</span>
