@@ -75,14 +75,17 @@ export default function RespirationPage() {
 
   if (loadingEx) {
     return (
-      <div className="bg-gradient-to-br from-green-200 via-green-100 to-green-950/10 flex-1 flex items-center justify-center">
-        <p className="text-green-700 text-sm">Chargement des exercices...</p>
+      <div className="bg-gradient-to-br from-green-200 via-green-100 to-green-950/10 flex-1 min-h-[80vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-200 border-t-green-600" />
+          <p className="text-green-700 text-sm">Chargement des exercices...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-green-200 via-green-100 to-green-950/10 flex-1">
+    <div className="bg-gradient-to-br from-green-200 via-green-100 to-green-950/10 flex-1 min-h-[80vh]">
       <div className="mx-auto max-w-6xl px-4 py-4 sm:py-5 lg:py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
 
