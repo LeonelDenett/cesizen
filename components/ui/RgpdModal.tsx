@@ -24,9 +24,7 @@ export default function RgpdCard() {
           <div className="relative w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-8 shadow-xl">
             <button type="button" onClick={() => setOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" aria-label="Fermer">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <span className="material-symbols-rounded text-xl">close</span>
             </button>
 
             <div className="flex items-center gap-3 mb-6">

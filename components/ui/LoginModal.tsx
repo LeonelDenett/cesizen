@@ -46,9 +46,7 @@ export default function LoginModal({ open, onClose, redirectTo = '/' }: LoginMod
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md mx-4 rounded-2xl bg-white p-8 shadow-xl">
         <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600" aria-label="Fermer">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <span className="material-symbols-rounded text-xl">close</span>
         </button>
 
         <div className="text-center mb-6">

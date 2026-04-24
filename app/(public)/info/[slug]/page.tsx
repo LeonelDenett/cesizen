@@ -68,9 +68,7 @@ export default async function InfoPage({
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-14">
           <div className="mx-auto max-w-6xl">
             <Link href="/articles" className="inline-flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors mb-4">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
+              <span className="material-symbols-rounded text-base">arrow_back</span>
               Tous les articles
             </Link>
             <div className="flex items-center gap-3 mb-3">

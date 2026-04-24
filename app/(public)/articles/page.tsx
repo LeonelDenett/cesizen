@@ -156,9 +156,7 @@ export default function ArticlesPage() {
                     <p className="mt-2 text-sm text-gray-500 line-clamp-3">{excerpt(article.content)}</p>
                     <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:text-green-700 transition-colors">
                       Lire l&apos;article
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                      </svg>
+                      <span className="material-symbols-rounded text-base">arrow_forward</span>
                     </span>
                   </div>
                 </Link>
