@@ -5,3 +5,5 @@ export * from "./info-pages";
 export * from "./menu-items";
 export * from "./emotions";
 export * from "./emotion-logs";
+export * from "./breathing-challenges";
+export * from "./breathing-exercises";

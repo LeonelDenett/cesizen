@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
             title: infoPages.title,
             slug: infoPages.slug,
             content: infoPages.content,
+            category: infoPages.category,
+            imageUrl: infoPages.imageUrl,
             status: infoPages.status,
             updatedAt: infoPages.updatedAt,
           })

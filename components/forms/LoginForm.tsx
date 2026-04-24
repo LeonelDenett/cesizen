@@ -7,18 +7,30 @@ import Link from 'next/link';
 
 export default function LoginForm() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  function fillDemo(role: 'admin' | 'user') {
+    if (role === 'admin') {
+      setEmail('admin@cesizen.fr');
+      setPassword('Admin123!');
+    } else {
+      setEmail('marie@cesizen.fr');
+      setPassword('User1234');
+    }
+    setError('');
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const rawEmail = (formData.get('email') as string || '').trim().toLowerCase();
-    const password = formData.get('password') as string || '';
+    const rawEmail = email.trim().toLowerCase();
+    const password_ = password;
 
     // Input validation — prevent injection
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,19 +39,19 @@ export default function LoginForm() {
       setLoading(false);
       return;
     }
-    if (password.length < 1 || password.length > 128) {
+    if (password_.length < 1 || password_.length > 128) {
       setError('Mot de passe invalide');
       setLoading(false);
       return;
     }
 
     // Sanitize — strip any HTML/script tags
-    const email = rawEmail.replace(/<[^>]*>/g, '');
+    const emailSanitized = rawEmail.replace(/<[^>]*>/g, '');
 
     try {
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: emailSanitized,
+        password: password_,
         redirect: false,
       });
 
@@ -73,6 +85,25 @@ export default function LoginForm() {
         </div>
       )}
 
+      {/* Demo quick-fill chips */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-400">Accès rapide :</span>
+        <button
+          type="button"
+          onClick={() => fillDemo('admin')}
+          className="rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+        >
+          🛡️ Admin
+        </button>
+        <button
+          type="button"
+          onClick={() => fillDemo('user')}
+          className="rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700 hover:bg-green-100 transition-colors"
+        >
+          👤 Utilisateur
+        </button>
+      </div>
+
       {/* Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -89,6 +120,8 @@ export default function LoginForm() {
             name="email"
             type="email"
             required
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all"
             placeholder="nom@exemple.com"
           />
@@ -116,6 +149,8 @@ export default function LoginForm() {
             name="password"
             type={showPassword ? 'text' : 'password'}
             required
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all"
             placeholder="••••••••"
           />

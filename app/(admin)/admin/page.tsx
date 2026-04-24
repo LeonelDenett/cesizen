@@ -19,10 +19,10 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500 mt-1">Gérer les articles, modifier le contenu, publier ou mettre en brouillon.</p>
         </Link>
 
-        <Link href="/admin/menu" className="group rounded-2xl bg-white border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition-all">
-          <span className="material-symbols-rounded text-3xl text-green-600 mb-3 block">menu_book</span>
-          <h3 className="font-bold text-gray-900 group-hover:text-green-700">Menu navigation</h3>
-          <p className="text-sm text-gray-500 mt-1">Configurer les éléments du menu dynamique du site.</p>
+        <Link href="/admin/respiration" className="group rounded-2xl bg-white border border-gray-100 shadow-sm p-6 hover:shadow-md hover:border-green-200 transition-all">
+          <span className="material-symbols-rounded text-3xl text-green-600 mb-3 block">self_improvement</span>
+          <h3 className="font-bold text-gray-900 group-hover:text-green-700">Respiration</h3>
+          <p className="text-sm text-gray-500 mt-1">Suivre les défis et sessions de respiration des utilisateurs.</p>
         </Link>
       </div>
     </div>

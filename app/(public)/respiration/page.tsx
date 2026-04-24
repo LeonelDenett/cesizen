@@ -1,25 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import BreathingExercise from '@/components/respiration/BreathingExercise';
+import ChallengePanel from '@/components/respiration/ChallengePanel';
 
-const BASIC_EXERCISES = [
-  { id: '748', name: '7-4-8 Relaxation', desc: 'Idéal pour l\'endormissement et la gestion de l\'anxiété. L\'expiration longue active le système parasympathique.', inspire: 7, hold: 4, expire: 8, color: 'from-green-400 to-green-600', benefit: 'Réduit l\'anxiété en 4 cycles' },
-  { id: '55', name: '5-5 Cohérence cardiaque', desc: 'L\'exercice de référence. 6 respirations par minute pendant 5 minutes = 4 à 6h de réduction du cortisol.', inspire: 5, hold: 0, expire: 5, color: 'from-green-500 to-emerald-600', benefit: 'Équilibre le système nerveux' },
-  { id: '46', name: '4-6 Apaisement rapide', desc: 'Expiration plus longue que l\'inspiration pour un effet calmant immédiat. Parfait en situation de stress.', inspire: 4, hold: 0, expire: 6, color: 'from-emerald-400 to-green-600', benefit: 'Calme en 2 minutes' },
-];
-
-const ADVANCED_EXERCISES = [
-  { id: '478', name: '4-7-8 Profonde', desc: 'Technique du Dr. Andrew Weil. La rétention longue augmente le CO2 sanguin, calmant puissamment le système nerveux.', inspire: 4, hold: 7, expire: 8, color: 'from-green-600 to-green-800', benefit: 'Endormissement rapide' },
-  { id: '363', name: '3-6-3 Équilibre', desc: 'Inspiration courte, expiration double. Idéal pour les débutants qui trouvent les exercices longs difficiles.', inspire: 3, hold: 6, expire: 3, color: 'from-green-500 to-green-700', benefit: 'Accessible aux débutants' },
-  { id: '5510', name: '5-5-10 Relaxation profonde', desc: 'Expiration très longue pour une relaxation maximale. Recommandé pour les praticiens expérimentés.', inspire: 5, hold: 5, expire: 10, color: 'from-green-700 to-green-900', benefit: 'Relaxation maximale' },
-];
+interface ExerciseData {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  inspire: number;
+  hold: number;
+  expire: number;
+  category: 'basic' | 'advanced';
+  benefit: string;
+  color: string;
+}
 
 export default function RespirationPage() {
-  const [selected, setSelected] = useState<typeof BASIC_EXERCISES[0] | null>(null);
+  const [exercises, setExercises] = useState<ExerciseData[]>([]);
+  const [selected, setSelected] = useState<ExerciseData | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [loadingEx, setLoadingEx] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/breathing-exercises')
+      .then(r => r.json())
+      .then(data => setExercises(data.exercises || []))
+      .catch(() => {})
+      .finally(() => setLoadingEx(false));
+
+    fetch('/api/breathing-challenges')
+      .then(r => { setIsLoggedIn(r.ok); })
+      .catch(() => setIsLoggedIn(false));
+  }, []);
+
+  const basicExercises = exercises.filter(e => e.category === 'basic');
+  const advancedExercises = exercises.filter(e => e.category === 'advanced');
+
+  async function handleExerciseComplete(exerciseId: string, cycles: number, duration: number) {
+    if (!isLoggedIn) return;
+    try {
+      await fetch('/api/breathing-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exerciseId: exerciseId, cycles, durationSeconds: duration }),
+      });
+      setRefreshKey(k => k + 1);
+    } catch { /* ignore */ }
+  }
+
+  function selectExercise(ex: ExerciseData) {
+    setSelected(ex);
+    window.scrollTo(0, 0);
+  }
+
+  function handleStartFromChallenge(exerciseId: string) {
+    const ex = exercises.find(e => e.code === exerciseId);
+    if (ex) selectExercise(ex);
+  }
 
   if (selected) {
-    return <BreathingExercise exercise={selected} onBack={() => setSelected(null)} />;
+    return (
+      <div className="animate-fade-in">
+        <BreathingExercise
+          exercise={{ id: selected.code, name: selected.name, inspire: selected.inspire, hold: selected.hold, expire: selected.expire, color: selected.color }}
+          onBack={() => setSelected(null)}
+          onComplete={handleExerciseComplete}
+        />
+      </div>
+    );
+  }
+
+  if (loadingEx) {
+    return (
+      <div className="bg-gradient-to-br from-green-200 via-green-100 to-green-950/10 flex-1 flex items-center justify-center">
+        <p className="text-green-700 text-sm">Chargement des exercices...</p>
+      </div>
+    );
   }
 
   return (
@@ -35,59 +94,76 @@ export default function RespirationPage() {
             </p>
           </div>
 
-          {/* Section: Exercices de base */}
-          <div className="sm:col-span-2 lg:col-span-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mb-3 px-1">Exercices de base</p>
-          </div>
+          {/* Challenge panel for logged-in users */}
+          {isLoggedIn && (
+            <div className="sm:col-span-2 lg:col-span-3">
+              <ChallengePanel
+                key={refreshKey}
+                exercises={exercises.map(e => ({ id: e.code, name: e.name }))}
+                onStartExercise={handleStartFromChallenge}
+              />
+            </div>
+          )}
 
-          {BASIC_EXERCISES.map(ex => (
-            <button key={ex.id} type="button" onClick={() => setSelected(ex)}
-              className="group rounded-3xl bg-white border border-gray-100 shadow-sm p-6 text-left hover:shadow-lg transition-all">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${ex.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <span className="text-white text-lg font-bold">{ex.id}</span>
-                </div>
-                <span className="text-xs text-green-600 bg-green-50 rounded-full px-3 py-1 font-medium">{ex.benefit}</span>
+          {/* Section: Exercices de base */}
+          {basicExercises.length > 0 && (
+            <>
+              <div className="sm:col-span-2 lg:col-span-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mb-3 px-1">Exercices de base</p>
               </div>
-              <h3 className="text-lg font-bold text-gray-900">{ex.name}</h3>
-              <p className="mt-1 text-sm text-gray-500 leading-relaxed">{ex.desc}</p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-                <span>⬆ {ex.inspire}s</span>
-                {ex.hold > 0 && <><span>·</span><span>⏸ {ex.hold}s</span></>}
-                <span>·</span><span>⬇ {ex.expire}s</span>
-              </div>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:gap-2 transition-all">
-                Commencer →
-              </span>
-            </button>
-          ))}
+              {basicExercises.map(ex => (
+                <button key={ex.id} type="button" onClick={() => selectExercise(ex)}
+                  className="group rounded-3xl bg-white border border-gray-100 shadow-sm p-6 text-left hover:shadow-lg transition-all">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${ex.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <span className="text-white text-lg font-bold">{ex.code}</span>
+                    </div>
+                    <span className="text-xs text-green-600 bg-green-50 rounded-full px-3 py-1 font-medium">{ex.benefit}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">{ex.name}</h3>
+                  <p className="mt-1 text-sm text-gray-500 leading-relaxed">{ex.description}</p>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                    <span>⬆ {ex.inspire}s</span>
+                    {ex.hold > 0 && <><span>·</span><span>⏸ {ex.hold}s</span></>}
+                    <span>·</span><span>⬇ {ex.expire}s</span>
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:gap-2 transition-all">
+                    Commencer →
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
 
           {/* Section: Exercices avancés */}
-          <div className="sm:col-span-2 lg:col-span-3 mt-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mb-3 px-1">Exercices avancés</p>
-          </div>
-
-          {ADVANCED_EXERCISES.map(ex => (
-            <button key={ex.id} type="button" onClick={() => setSelected(ex)}
-              className="group rounded-3xl bg-white border border-gray-100 shadow-sm p-6 text-left hover:shadow-lg transition-all">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${ex.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <span className="text-white text-sm font-bold">{ex.id}</span>
-                </div>
-                <span className="text-xs text-yellow-700 bg-yellow-50 rounded-full px-3 py-1 font-medium">{ex.benefit}</span>
+          {advancedExercises.length > 0 && (
+            <>
+              <div className="sm:col-span-2 lg:col-span-3 mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mb-3 px-1">Exercices avancés</p>
               </div>
-              <h3 className="text-lg font-bold text-gray-900">{ex.name}</h3>
-              <p className="mt-1 text-sm text-gray-500 leading-relaxed">{ex.desc}</p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-                <span>⬆ {ex.inspire}s</span>
-                {ex.hold > 0 && <><span>·</span><span>⏸ {ex.hold}s</span></>}
-                <span>·</span><span>⬇ {ex.expire}s</span>
-              </div>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:gap-2 transition-all">
-                Commencer →
-              </span>
-            </button>
-          ))}
+              {advancedExercises.map(ex => (
+                <button key={ex.id} type="button" onClick={() => selectExercise(ex)}
+                  className="group rounded-3xl bg-white border border-gray-100 shadow-sm p-6 text-left hover:shadow-lg transition-all">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${ex.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <span className="text-white text-sm font-bold">{ex.code}</span>
+                    </div>
+                    <span className="text-xs text-yellow-700 bg-yellow-50 rounded-full px-3 py-1 font-medium">{ex.benefit}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">{ex.name}</h3>
+                  <p className="mt-1 text-sm text-gray-500 leading-relaxed">{ex.description}</p>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                    <span>⬆ {ex.inspire}s</span>
+                    {ex.hold > 0 && <><span>·</span><span>⏸ {ex.hold}s</span></>}
+                    <span>·</span><span>⬇ {ex.expire}s</span>
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-600 group-hover:gap-2 transition-all">
+                    Commencer →
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
 
           {/* Pourquoi la respiration */}
           <div className="sm:col-span-2 lg:col-span-3 rounded-3xl bg-white border border-gray-100 shadow-sm p-6 sm:p-8 mt-4">
@@ -117,7 +193,7 @@ export default function RespirationPage() {
           </div>
 
           {/* Conseil */}
-          <div className="sm:col-span-2 lg:col-span-3 rounded-3xl bg-green-950 p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-6 sm:gap-6">
+          <div className="sm:col-span-2 lg:col-span-3 rounded-3xl bg-green-950 p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
             <div className="text-4xl sm:text-5xl">💡</div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-green-400 mb-1">Conseil de pratique</p>

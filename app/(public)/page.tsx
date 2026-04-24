@@ -6,11 +6,11 @@ export default function HomePage() {
   return (
     <div className="bg-gradient-to-br from-green-50 via-white to-green-100/30 min-h-screen relative overflow-hidden">
       {/* Decorative circles */}
-      <div className="absolute top-20 -left-20 w-72 h-72 bg-green-200/30 rounded-full blur-3xl" />
-      <div className="absolute top-96 right-0 w-96 h-96 bg-green-100/40 rounded-full blur-3xl" />
-      <div className="absolute bottom-40 -left-32 w-80 h-80 bg-yellow-100/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-20 w-64 h-64 bg-green-200/20 rounded-full blur-3xl" />
-      <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-green-300/15 rounded-full blur-2xl" />
+      <div className="absolute top-20 -left-20 w-72 h-72 bg-green-200/30 rounded-full blur-3xl" aria-hidden="true" />
+      <div className="absolute top-96 right-0 w-96 h-96 bg-green-100/40 rounded-full blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-40 -left-32 w-80 h-80 bg-yellow-100/30 rounded-full blur-3xl" aria-hidden="true" />
+      <div className="absolute bottom-0 right-20 w-64 h-64 bg-green-200/20 rounded-full blur-3xl" aria-hidden="true" />
+      <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-green-300/15 rounded-full blur-2xl" aria-hidden="true" />
 
       <div className="relative mx-auto max-w-6xl px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
 

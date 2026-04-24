@@ -32,6 +32,26 @@ export function generateSlug(title: string): string {
 }
 
 /**
+ * Sanitize a string by stripping HTML/script tags to prevent XSS.
+ */
+export function sanitize(input: string): string {
+  return input.replace(/<[^>]*>/g, '').trim();
+}
+
+/**
+ * Sanitize all string values in an object (shallow).
+ */
+export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+  const result = { ...obj };
+  for (const key of Object.keys(result)) {
+    if (typeof result[key] === 'string') {
+      (result as Record<string, unknown>)[key] = sanitize(result[key] as string);
+    }
+  }
+  return result;
+}
+
+/**
  * Calculate date range for a given period (week, month, quarter, year).
  * Week starts on Monday (French convention).
  */

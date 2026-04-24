@@ -20,7 +20,7 @@ const PHASE_LABELS: Record<Phase, string> = {
   expire: 'Expirez',
 };
 
-export default function BreathingExercise({ exercise, onBack }: { exercise: Exercise; onBack: () => void }) {
+export default function BreathingExercise({ exercise, onBack, onComplete }: { exercise: Exercise; onBack: () => void; onComplete?: (exerciseId: string, cycles: number, duration: number) => void }) {
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [countdown, setCountdown] = useState(0);
@@ -29,13 +29,17 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cyclesRef = useRef(0);
+  const elapsedRef = useRef(0);
 
-  const stop = useCallback(() => {
+  const stop = useCallback((completed = false) => {
     setRunning(false);
     setPhase('idle');
     setCountdown(0);
     if (intervalRef.current) clearInterval(intervalRef.current);
-  }, []);
+    if (completed && onComplete) {
+      onComplete(exercise.id, cyclesRef.current, elapsedRef.current);
+    }
+  }, [exercise.id, onComplete]);
 
   const tick = useCallback(() => {
     setCountdown(prev => {
@@ -49,7 +53,7 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
           if (currentPhase === 'expire') {
             cyclesRef.current += 1;
             setCycles(cyclesRef.current);
-            if (cyclesRef.current >= totalCycles) { stop(); return 'idle'; }
+            if (cyclesRef.current >= totalCycles) { stop(true); return 'idle'; }
             setCountdown(exercise.inspire); return 'inspire';
           }
           return currentPhase;
@@ -58,11 +62,16 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
       }
       return prev - 1;
     });
-    setElapsed(e => e + 1);
+    setElapsed(e => {
+      const next = e + 1;
+      elapsedRef.current = next;
+      return next;
+    });
   }, [exercise, totalCycles, stop]);
 
   function start() {
     cyclesRef.current = 0;
+    elapsedRef.current = 0;
     setCycles(0);
     setElapsed(0);
     setPhase('inspire');
@@ -97,9 +106,16 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-950 via-green-900 to-green-950 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-green-950 via-green-900 to-green-950 flex flex-col items-center justify-center px-4 relative overflow-hidden" role="region" aria-label={`Exercice de respiration : ${exercise.name}`}>
+      {/* Screen reader live region */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {running && `${PHASE_LABELS[phase]}, ${countdown} secondes. Cycle ${cycles + 1} sur ${totalCycles}.`}
+        {done && `Exercice terminé. ${cycles} cycles complétés en ${formatTime(elapsed)}.`}
+      </div>
+
       {/* Back */}
       <button type="button" onClick={() => { stop(); onBack(); }}
+        aria-label="Retour à la liste des exercices"
         className="absolute top-6 left-6 flex items-center gap-2 text-sm text-green-300/60 hover:text-white transition-colors z-10">
         ← Retour
       </button>
@@ -110,11 +126,12 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
       </div>
 
       {/* Ambient glow */}
-      <div className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30 bg-green-500 transition-transform duration-1000 ease-in-out"
+      <div className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-30 bg-green-500 transition-transform duration-1000 ease-in-out" aria-hidden="true"
         style={{ transform: `scale(${scale * 0.8})` }} />
 
       {/* Main circle — clickable to start */}
       <button type="button" onClick={handleBubbleClick} disabled={running}
+        aria-label={done ? `Exercice terminé, ${cycles} cycles` : running ? `${PHASE_LABELS[phase]}, ${countdown} secondes` : 'Appuyez pour commencer l\'exercice de respiration'}
         className="relative flex items-center justify-center focus:outline-none group">
         {/* Outer ring */}
         <div className={`absolute rounded-full border-2 transition-all duration-1000 ease-in-out ${
@@ -149,10 +166,12 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
       {/* Controls */}
       <div className="mt-12 flex flex-col items-center gap-4 z-10">
         {!running && !done && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" role="radiogroup" aria-label="Nombre de cycles">
             <span className="text-xs text-green-400/60">Cycles :</span>
             {[3, 6, 10].map(n => (
               <button key={n} type="button" onClick={() => setTotalCycles(n)}
+                role="radio" aria-checked={totalCycles === n}
+                aria-label={`${n} cycles`}
                 className={`h-9 w-9 rounded-full text-xs font-bold transition-all ${totalCycles === n ? 'bg-green-400 text-green-950' : 'bg-green-800/50 text-green-300 hover:bg-green-700/50'}`}>
                 {n}
               </button>
@@ -186,7 +205,7 @@ export default function BreathingExercise({ exercise, onBack }: { exercise: Exer
 
       {/* Progress dots */}
       {(running || done) && (
-        <div className="absolute bottom-8 flex items-center gap-2">
+        <div className="absolute bottom-8 flex items-center gap-2" role="progressbar" aria-valuenow={cycles} aria-valuemin={0} aria-valuemax={totalCycles} aria-label={`Progression : ${cycles} cycles sur ${totalCycles}`}>
           {Array.from({ length: totalCycles }).map((_, i) => (
             <div key={i} className={`h-2 w-2 rounded-full transition-colors ${i < cycles ? 'bg-green-400' : i === cycles && running ? 'bg-green-400/60 animate-pulse' : 'bg-green-700/40'}`} />
           ))}

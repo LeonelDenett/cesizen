@@ -10,8 +10,9 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      <a href="#main-content" className="skip-to-content">Aller au contenu principal</a>
       <Header />
-      <main className="flex-1 flex flex-col">{children}</main>
+      <main id="main-content" className="flex-1 flex flex-col animate-fade-slide-up" role="main">{children}</main>
       <Footer />
     </>
   );
