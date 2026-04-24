@@ -32,7 +32,7 @@ export default async function AdminLayout({
 
       {/* Body: sidebar + content */}
       <div className="flex flex-1">
-        <AdminSidebar userName={currentUser.name} userEmail={currentUser.email} />
+        <AdminSidebar userName={currentUser.name ?? ''} userEmail={currentUser.email ?? ''} />
         <main id="admin-content" className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8 overflow-auto animate-fade-slide-up" role="main">
           {children}
         </main>
