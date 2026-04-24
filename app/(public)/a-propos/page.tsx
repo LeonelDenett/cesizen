@@ -33,21 +33,21 @@ export default function AProposPage() {
                 Face à ce constat, nous avons créé CESIZen : un outil gratuit, accessible et scientifiquement fondé pour aider chacun à mieux comprendre ses émotions et prendre soin de sa santé mentale au quotidien.
               </p>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                Notre approche combine le suivi émotionnel personnalisé, des ressources éducatives validées par des professionnels, et des outils de visualisation pour identifier vos tendances émotionnelles.
+                Notre approche combine des exercices de respiration interactifs, des ressources éducatives validées par des professionnels, et des défis personnalisés pour cultiver votre bien-être au quotidien.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-green-50 p-6 text-center">
-                <p className="text-3xl font-black text-green-700">3</p>
-                <p className="text-sm text-gray-600 mt-1">Modules complets</p>
+                <p className="text-3xl font-black text-green-700">6</p>
+                <p className="text-sm text-gray-600 mt-1">Exercices de respiration</p>
               </div>
               <div className="rounded-2xl bg-yellow-50 p-6 text-center">
-                <p className="text-3xl font-black text-yellow-600">6</p>
-                <p className="text-sm text-gray-600 mt-1">Émotions de base</p>
+                <p className="text-3xl font-black text-yellow-600">13</p>
+                <p className="text-sm text-gray-600 mt-1">Articles santé</p>
               </div>
               <div className="rounded-2xl bg-blue-50 p-6 text-center">
-                <p className="text-3xl font-black text-blue-600">36</p>
-                <p className="text-sm text-gray-600 mt-1">Nuances émotionnelles</p>
+                <p className="text-3xl font-black text-blue-600">5</p>
+                <p className="text-sm text-gray-600 mt-1">Catégories</p>
               </div>
               <div className="rounded-2xl bg-red-50 p-6 text-center">
                 <p className="text-3xl font-black text-red-600">100%</p>
@@ -65,24 +65,24 @@ export default function AProposPage() {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Ce que CESIZen vous offre</h2>
 
           <div className="space-y-6">
-            {/* Tracker */}
+            {/* Respiration */}
             <div className="flex flex-col sm:flex-row gap-6 items-start rounded-2xl bg-white border border-gray-100 p-6 sm:p-8">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">😊</div>
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-2xl">🌬️</div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Tracker d&apos;émotions</h3>
+                <h3 className="text-xl font-bold text-gray-900">Exercices de respiration</h3>
                 <p className="mt-2 text-gray-600 leading-relaxed">
-                  Enregistrez vos émotions grâce à un système à deux niveaux : choisissez d&apos;abord une émotion de base (Joie, Colère, Peur, Tristesse, Surprise, Dégoût), puis précisez avec une nuance. Ajoutez une note personnelle et suivez votre journal de bord au fil du temps.
+                  Pratiquez la cohérence cardiaque avec 6 exercices interactifs : 7-4-8, 5-5, 4-6 pour les débutants, et 4-7-8, 3-6-3, 5-5-10 pour les avancés. Une animation visuelle vous guide à chaque inspiration, rétention et expiration.
                 </p>
               </div>
             </div>
 
-            {/* Rapports */}
+            {/* Défis */}
             <div className="flex flex-col sm:flex-row gap-6 items-start rounded-2xl bg-white border border-gray-100 p-6 sm:p-8">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-2xl">📊</div>
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-2xl">🎯</div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Rapports personnalisés</h3>
+                <h3 className="text-xl font-bold text-gray-900">Défis personnalisés</h3>
                 <p className="mt-2 text-gray-600 leading-relaxed">
-                  Visualisez la distribution de vos émotions par semaine, mois, trimestre ou année. Identifiez vos tendances dominantes, découvrez les nuances les plus fréquentes et suivez votre évolution émotionnelle dans le temps.
+                  Créez vos propres défis de respiration : choisissez un exercice, définissez combien de fois par jour et combien de jours par semaine. Suivez votre progression avec des barres de progression quotidiennes et hebdomadaires.
                 </p>
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function AProposPage() {
       <section className="px-4 py-16 sm:py-20 bg-green-950">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Prêt(e) à prendre soin de vous ?</h2>
-          <p className="text-green-200 mb-8 max-w-lg mx-auto">Créez votre compte gratuitement et commencez à suivre vos émotions dès aujourd&apos;hui.</p>
+          <p className="text-green-200 mb-8 max-w-lg mx-auto">Créez votre compte gratuitement et commencez à pratiquer la respiration consciente dès aujourd&apos;hui.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/register" className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-8 py-3.5 text-sm font-bold text-green-950 hover:bg-yellow-300 transition-colors">
               Créer un compte gratuit →

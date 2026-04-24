@@ -17,6 +17,7 @@ interface Article {
 
 const CATEGORIES = [
   { value: 'all', label: 'Tous', emoji: '📚' },
+  { value: 'favoris', label: 'Favoris', emoji: '❤️' },
   { value: 'alimentation', label: 'Alimentation', emoji: '🥗' },
   { value: 'sport', label: 'Sport', emoji: '🏃' },
   { value: 'meditation', label: 'Méditation', emoji: '🧘' },
@@ -71,7 +72,11 @@ export default function ArticlesPage() {
     }
   }
 
-  const filtered = filter === 'all' ? articles : articles.filter(a => a.category === filter);
+  const filtered = filter === 'all'
+    ? articles
+    : filter === 'favoris'
+      ? articles.filter(a => favIds.has(a.id))
+      : articles.filter(a => a.category === filter);
 
   function excerpt(content: string) {
     return content.replace(/[#*\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) + '...';

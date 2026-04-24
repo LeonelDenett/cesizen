@@ -108,7 +108,7 @@ export default function Footer() {
       <div className="border-t border-green-900">
         <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8 flex items-center justify-center">
           <p className="text-xs text-green-300 text-center">
-            © 2025 CESIZen · Ministère de la Santé et de la Prévention · Tous droits réservés
+            © 2026 CESIZen · Ministère de la Santé et de la Prévention · Tous droits réservés
           </p>
         </div>
       </div>
