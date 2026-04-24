@@ -27,7 +27,7 @@ export default async function AdminLayout({
           </span>
           <span className="text-xs text-green-400 font-medium hidden sm:inline">Administration</span>
         </Link>
-        <AdminMobileMenu userName={currentUser.name} userEmail={currentUser.email} />
+        <AdminMobileMenu userName={currentUser.name ?? ''} userEmail={currentUser.email ?? ''} />
       </header>
 
       {/* Body: sidebar + content */}
