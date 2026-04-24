@@ -180,7 +180,7 @@ export default function BreathingExercise({ exercise, onBack, onComplete }: { ex
         )}
 
         {running && (
-          <button type="button" onClick={stop}
+          <button type="button" onClick={() => stop()}
             className="rounded-full bg-green-800/50 border border-green-600/30 px-6 py-2.5 text-sm font-medium text-green-200 hover:bg-green-700/50 transition-colors">
             Arrêter
           </button>
