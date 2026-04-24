@@ -185,7 +185,7 @@ export default function AdminRespirationPage() {
           <div className="flex justify-end mb-4">
             <button type="button"
               onClick={() => { setEditingEx(null); setShowExForm(!showExForm); setError(''); }}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors">
               {showExForm && !editingEx ? 'Annuler' : 'Nouvel exercice'}
             </button>
           </div>
@@ -200,37 +200,37 @@ export default function AdminRespirationPage() {
                   <div>
                     <label htmlFor="ex-code" className="block text-sm font-medium text-gray-700 mb-1">Code</label>
                     <input id="ex-code" name="code" type="text" required defaultValue={editingEx?.code || ''} placeholder="ex: 748"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-name" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                     <input id="ex-name" name="name" type="text" required defaultValue={editingEx?.name || ''}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-benefit" className="block text-sm font-medium text-gray-700 mb-1">Bénéfice</label>
                     <input id="ex-benefit" name="benefit" type="text" required defaultValue={editingEx?.benefit || ''}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-inspire" className="block text-sm font-medium text-gray-700 mb-1">Inspire (s)</label>
                     <input id="ex-inspire" name="inspire" type="number" required min={1} max={30} defaultValue={editingEx?.inspire || ''}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-hold" className="block text-sm font-medium text-gray-700 mb-1">Rétention (s)</label>
                     <input id="ex-hold" name="hold" type="number" min={0} max={30} defaultValue={editingEx?.hold ?? 0}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-expire" className="block text-sm font-medium text-gray-700 mb-1">Expire (s)</label>
                     <input id="ex-expire" name="expire" type="number" required min={1} max={30} defaultValue={editingEx?.expire || ''}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-category" className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
                     <select id="ex-category" name="category" defaultValue={editingEx?.category || 'basic'}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
                       <option value="basic">Base</option>
                       <option value="advanced">Avancé</option>
                     </select>
@@ -238,21 +238,21 @@ export default function AdminRespirationPage() {
                   <div>
                     <label htmlFor="ex-color" className="block text-sm font-medium text-gray-700 mb-1">Couleur (gradient)</label>
                     <input id="ex-color" name="color" type="text" defaultValue={editingEx?.color || 'from-green-400 to-green-600'}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                   <div>
                     <label htmlFor="ex-order" className="block text-sm font-medium text-gray-700 mb-1">Ordre</label>
                     <input id="ex-order" name="displayOrder" type="number" min={0} defaultValue={editingEx?.displayOrder ?? 0}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                   </div>
                 </div>
                 <div>
                   <label htmlFor="ex-desc" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea id="ex-desc" name="description" required rows={2} defaultValue={editingEx?.description || ''}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
                 </div>
                 <div className="flex gap-2">
-                  <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                  <button type="submit" className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800 transition-colors">
                     {editingEx ? 'Enregistrer' : 'Créer'}
                   </button>
                   <button type="button" onClick={() => { setShowExForm(false); setEditingEx(null); }}
@@ -303,7 +303,7 @@ export default function AdminRespirationPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => startEdit(ex)}
-                            className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200">Modifier</button>
+                            className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-200">Modifier</button>
                           <button type="button" onClick={() => toggleExercise(ex)}
                             className={`rounded px-2 py-1 text-xs font-medium ${ex.isActive ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
                             {ex.isActive ? 'Désactiver' : 'Activer'}

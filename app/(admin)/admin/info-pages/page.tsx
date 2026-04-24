@@ -24,7 +24,7 @@ const CAT_LABELS: Record<string, string> = {
 
 const CAT_COLORS: Record<string, string> = {
   alimentation: 'bg-orange-100 text-orange-700',
-  sport: 'bg-blue-100 text-blue-700',
+  sport: 'bg-green-100 text-green-700',
   meditation: 'bg-purple-100 text-purple-700',
   stress: 'bg-red-100 text-red-700',
   general: 'bg-gray-100 text-gray-700',
@@ -103,7 +103,7 @@ export default function AdminInfoPagesPage() {
           <p className="text-sm text-gray-500">{pages.length} articles · {publishedCount} publiés · {pages.length - publishedCount} brouillons</p>
         </div>
         <button type="button" onClick={showForm ? handleCancelForm : handleNewPage}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+          className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 transition-colors">
           {showForm ? 'Annuler' : 'Nouvel article'}
         </button>
       </div>
@@ -119,12 +119,12 @@ export default function AdminInfoPagesPage() {
               <div>
                 <label htmlFor="page-title" className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
                 <input id="page-title" name="title" type="text" required defaultValue={editingPage?.title ?? ''}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
               </div>
               <div>
                 <label htmlFor="page-category" className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
                 <select id="page-category" name="category" defaultValue={editingPage?.category ?? 'general'}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
                   <option value="general">Général</option>
                   <option value="alimentation">Alimentation</option>
                   <option value="sport">Sport</option>
@@ -136,13 +136,13 @@ export default function AdminInfoPagesPage() {
             <div>
               <label htmlFor="page-image" className="block text-sm font-medium text-gray-700 mb-1">Image (URL)</label>
               <input id="page-image" name="imageUrl" type="url" defaultValue={editingPage?.imageUrl ?? ''}
-                placeholder="https://images.unsplash.com/..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                placeholder="https://images.unsplash.com/..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500" />
             </div>
             <div>
               <label htmlFor="page-content" className="block text-sm font-medium text-gray-700 mb-1">Contenu (Markdown)</label>
               <textarea id="page-content" name="content" required rows={10} defaultValue={editingPage?.content ?? ''}
                 placeholder="## Titre&#10;&#10;Votre contenu ici..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y" />
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 font-mono focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 resize-y" />
             </div>
             {/* Collapsible: Statut & options */}
             <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -161,7 +161,7 @@ export default function AdminInfoPagesPage() {
                   <div>
                     <label htmlFor="page-status" className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                     <select id="page-status" name="status" defaultValue={editingPage?.status ?? 'draft'}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
                       <option value="draft">🟡 Brouillon</option>
                       <option value="published">🟢 Publié</option>
                     </select>
@@ -175,7 +175,7 @@ export default function AdminInfoPagesPage() {
             </div>
             <div className="flex gap-2">
               <button type="submit" disabled={saving}
-                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50 transition-colors">
                 {saving ? 'Enregistrement...' : editingPage ? 'Mettre à jour' : 'Créer'}
               </button>
               <button type="button" onClick={handleCancelForm}
@@ -225,7 +225,7 @@ export default function AdminInfoPagesPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
                     <button type="button" onClick={() => handleEdit(page)}
-                      className="flex-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors text-center">
+                      className="flex-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 transition-colors text-center">
                       Modifier
                     </button>
                     {deleteConfirmId === page.id ? (
