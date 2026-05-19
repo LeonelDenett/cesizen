@@ -15,9 +15,10 @@ test.describe('Authentification — Flujo completo', () => {
   test('Registro → Login → Perfil → Logout', async ({ page }) => {
     // ── 1. Registro ──
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Commencez votre voyage' })).toBeVisible();
 
-    await page.getByLabel('Nom').fill(TEST_USER.name);
+    await page.getByLabel('Prénom').fill('Test');
+    await page.getByLabel('Nom', { exact: true }).fill('Utilisateur');
     await page.getByLabel('Email').fill(TEST_USER.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(TEST_USER.password);
     await page.getByLabel('Confirmer le mot de passe').fill(TEST_USER.password);
@@ -33,7 +34,7 @@ test.describe('Authentification — Flujo completo', () => {
     await expect(page.getByRole('heading', { name: 'Se connecter' })).toBeVisible();
 
     await page.getByLabel('Email').fill(TEST_USER.email);
-    await page.getByLabel('Mot de passe').fill(TEST_USER.password);
+    await page.getByLabel('Mot de passe', { exact: true }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
 
     // Esperar redirección a la página principal (usuario normal → /)
@@ -65,7 +66,7 @@ test.describe('Authentification — Flujo completo', () => {
     await page.goto('/login');
 
     await page.getByLabel('Email').fill('inexistant@test.com');
-    await page.getByLabel('Mot de passe').fill('MauvaisMotDePasse1');
+    await page.getByLabel('Mot de passe', { exact: true }).fill('MauvaisMotDePasse1');
     await page.getByRole('button', { name: 'Se connecter' }).click();
 
     await expect(page.getByText('Email ou mot de passe incorrect')).toBeVisible({

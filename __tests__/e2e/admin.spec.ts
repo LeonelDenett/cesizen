@@ -21,7 +21,7 @@ test.describe('Administration des utilisateurs — Flujo completo', () => {
     // ── 1. Login como admin ──
     await page.goto('/login');
     await page.getByLabel('Email').fill(ADMIN.email);
-    await page.getByLabel('Mot de passe').fill(ADMIN.password);
+    await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await page.waitForURL('/admin**', { timeout: 10_000 });
 

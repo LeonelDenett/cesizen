@@ -62,6 +62,9 @@ jobs:
       - name: Installation des dépendances
         run: npm ci
 
+      - name: Installation de ts-node
+        run: npm install -D ts-node
+
       - name: Exécution des tests
         run: npm run test
 

@@ -16,7 +16,8 @@ test.describe('Tracker d\'émotions — Flujo completo', () => {
     // Registrar usuario de prueba
     const page = await browser.newPage();
     await page.goto('/register');
-    await page.getByLabel('Nom').fill(USER.name);
+    await page.getByLabel('Prénom').fill('Tracker');
+    await page.getByLabel('Nom', { exact: true }).fill('User');
     await page.getByLabel('Email').fill(USER.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(USER.password);
     await page.getByLabel('Confirmer le mot de passe').fill(USER.password);
@@ -31,7 +32,7 @@ test.describe('Tracker d\'émotions — Flujo completo', () => {
     // ── 1. Login ──
     await page.goto('/login');
     await page.getByLabel('Email').fill(USER.email);
-    await page.getByLabel('Mot de passe').fill(USER.password);
+    await page.getByLabel('Mot de passe', { exact: true }).fill(USER.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await page.waitForURL('/', { timeout: 10_000 });
 
