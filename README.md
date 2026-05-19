@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cesizen - Application de gestion de notes
 
-## Getting Started
+Application Next.js pour la gestion de notes avec authentification et base de données PostgreSQL.
 
-First, run the development server:
+## Stack technique
 
+- **Frontend:** Next.js 16, React 19, Tailwind CSS
+- **Backend:** Next.js API Routes
+- **Base de données:** PostgreSQL avec Drizzle ORM
+- **Authentification:** NextAuth.js
+- **Tests:** Jest, Playwright
+
+## Installation
+
+### Prérequis
+
+- Node.js 20+
+- Docker et Docker Compose
+
+### Configuration
+
+1. Copier le fichier d'exemple:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Modifier les variables d'environnement dans `.env.local`:
+```env
+POSTGRES_PASSWORD=votre-mot-de-passe-securise
+NEXTAUTH_SECRET=votre-secret-min-32-caracteres
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Lancement en développement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Avec Docker Compose
+docker-compose -f docker-compose.dev.yml up
 
-## Learn More
+# Ou en local
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Lancement en production
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Build et lancement
+docker-compose up --build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Commandes disponibles
 
-## Deploy on Vercel
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Mode développement |
+| `npm run build` | Build production |
+| `npm run start` | Lancement production |
+| `npm run lint` | Vérification du code |
+| `npm run test` | Tests unitaires |
+| `npm run test:e2e` | Tests E2E |
+| `npm run db:generate` | Génération migrations Drizzle |
+| `npm run db:migrate` | Application migrations |
+| `npm run db:seed` | Seed de la base de données |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## CI/CD
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### GitHub Actions
+
+Le pipeline se déclenche sur:
+- Push vers `main` ou `develop`
+- Pull requests vers `main` ou `develop`
+
+Étapes:
+1. **Installation** - Dépendances npm
+2. **Lint** - Vérification ESLint
+3. **Test** - Tests unitaires Jest
+4. **Build** - Build Next.js
+5. **Docker** - Construction image
+6. **E2E** - Tests Playwright
+
+## Structure du projet
+
+```
+├── .github/workflows/    # GitHub Actions
+├── docs/                 # Documentation
+│   ├── tickets/          # Suivi des tickets
+│   └── workflow.md       # Flux de travail
+├── lib/                  # Code backend
+│   └── db/               # Schéma et config Drizzle
+├── public/               # Assets statiques
+├── src/                  # Code source Next.js
+├── Dockerfile            # Image de production
+├── docker-compose.yml   # Configuration production
+└── .env.example          # Template de configuration
+```
+
+## Gestion des tickets
+
+Voir [docs/workflow.md](docs/workflow.md) pour le flux de travail ticket → merge.
+
+Tickets disponibles dans [docs/tickets/](docs/tickets/).
+
+## Sécurité
+
+- Les variables sensibles sont dans `.env.local` (non versionné)
+- Ports exposés uniquement sur `127.0.0.1`
+- Secrets non inclus dans les couches Docker
+- Utilisateur non-root dans le conteneur

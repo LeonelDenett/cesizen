@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cesizen
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cesizen}
     ports:
-      - "5477:5432"
+      - "127.0.0.1:5477:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,17 +20,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: postgresql://postgres:postgres@db:5432/cesizen
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-super-secret-change-me}
-        NEXTAUTH_URL: http://localhost:3333
     restart: unless-stopped
     ports:
-      - "3333:3000"
+      - "127.0.0.1:${APP_PORT:-3333}:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/cesizen
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-super-secret-change-me}
-      NEXTAUTH_URL: http://localhost:3333
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3333}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cesizen}
     depends_on:
       db:
         condition: service_healthy

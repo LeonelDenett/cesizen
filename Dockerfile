@@ -12,14 +12,17 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build args become env vars at build time
+# Build sans secrets - utilise les valeurs par défaut
+# Les vrais secrets sont injectés en runtime via environment
 ARG DATABASE_URL
-ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 
-ENV DATABASE_URL=$DATABASE_URL
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV DATABASE_URL=${DATABASE_URL:-}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+
+# Supprimer les variables de build pour éviter leur exposition dans les couches
+ENV DATABASE_URL=
+ENV NEXTAUTH_URL=
 
 RUN npm run build
 
@@ -27,16 +30,12 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 
-# Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built app
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-
-# Copy drizzle migrations and seed
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/lib/db ./lib/db

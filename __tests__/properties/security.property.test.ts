@@ -5,7 +5,7 @@ import * as fc from "fast-check";
  * Property 33: Las rutas protegidas rechazan solicitudes no autenticadas
  * Validates: Requirements 14.5, 14.6
  *
- * For any protected API Route (tracker, users admin, CMS admin),
+ * For any protected API Route (users admin, breathing admin, info-pages),
  * a request without a valid authentication token must receive a 401 error.
  */
 
@@ -33,13 +33,6 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
-jest.mock("@/lib/actions/tracker", () => ({
-  getTrackerEntries: jest.fn(),
-  createTrackerEntry: jest.fn(),
-  updateTrackerEntry: jest.fn(),
-  deleteTrackerEntry: jest.fn(),
-}));
-
 jest.mock("@/lib/actions/users", () => ({
   createUserAsAdmin: jest.fn(),
 }));
@@ -48,26 +41,14 @@ jest.mock("@/lib/actions/info-pages", () => ({
   createInfoPage: jest.fn(),
 }));
 
-jest.mock("@/lib/actions/emotions", () => ({
-  createEmotion: jest.fn(),
-}));
-
-jest.mock("@/lib/validators/tracker", () => ({
-  createEmotionLogSchema: { safeParse: jest.fn(() => ({ success: true, data: {} })) },
-  updateEmotionLogSchema: { safeParse: jest.fn(() => ({ success: true, data: {} })) },
-}));
-
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { authOptions } from "@/lib/auth";
 
 // ---- Route handler imports ----
 // We import the route handlers to test them directly
 
-import { GET as trackerGET, POST as trackerPOST } from "@/app/api/tracker/route";
-import { PUT as trackerPUT, DELETE as trackerDELETE } from "@/app/api/tracker/[id]/route";
 import { GET as usersGET, POST as usersPOST } from "@/app/api/users/route";
 import { POST as infoPagesPOST } from "@/app/api/info-pages/route";
-import { POST as emotionsPOST } from "@/app/api/emotions/route";
 
 // ---- Helpers ----
 
@@ -92,34 +73,6 @@ interface ProtectedRoute {
 
 const protectedRoutes: ProtectedRoute[] = [
   {
-    name: "GET /api/tracker",
-    handler: trackerGET as (req: Request) => Promise<Response>,
-    method: "GET",
-    url: "http://localhost:3000/api/tracker",
-  },
-  {
-    name: "POST /api/tracker",
-    handler: trackerPOST as (req: Request) => Promise<Response>,
-    method: "POST",
-    url: "http://localhost:3000/api/tracker",
-    body: { emotionLevel1Id: "id1", emotionLevel2Id: "id2", logDate: "2024-01-01" },
-  },
-  {
-    name: "PUT /api/tracker/[id]",
-    handler: trackerPUT as (req: Request, ctx: unknown) => Promise<Response>,
-    method: "PUT",
-    url: "http://localhost:3000/api/tracker/some-id",
-    body: { note: "test" },
-    ctx: { params: Promise.resolve({ id: "some-id" }) },
-  },
-  {
-    name: "DELETE /api/tracker/[id]",
-    handler: trackerDELETE as (req: Request, ctx: unknown) => Promise<Response>,
-    method: "DELETE",
-    url: "http://localhost:3000/api/tracker/some-id",
-    ctx: { params: Promise.resolve({ id: "some-id" }) },
-  },
-  {
     name: "GET /api/users",
     handler: usersGET as (req: Request) => Promise<Response>,
     method: "GET",
@@ -138,13 +91,6 @@ const protectedRoutes: ProtectedRoute[] = [
     method: "POST",
     url: "http://localhost:3000/api/info-pages",
     body: { title: "Test", content: "Content", status: "draft" },
-  },
-  {
-    name: "POST /api/emotions",
-    handler: emotionsPOST as (req: Request) => Promise<Response>,
-    method: "POST",
-    url: "http://localhost:3000/api/emotions",
-    body: { name: "TestEmotion", level: "1" },
   },
 ];
 

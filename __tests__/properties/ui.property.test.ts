@@ -126,7 +126,7 @@ const frenchDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
 const arbDate = fc.date({
   min: new Date("1000-01-01T00:00:00.000Z"),
   max: new Date("9999-06-01T00:00:00.000Z"),
-});
+}).filter((d) => !isNaN(d.getTime()));
 
 describe("Property 36: Formateo de fechas en formato francés", () => {
   // **Validates: Requirements 16.3**

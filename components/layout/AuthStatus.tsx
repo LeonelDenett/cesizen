@@ -20,7 +20,10 @@ export default function AuthStatus() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (status === 'loading') return <div className="h-9 w-9 animate-pulse rounded-full bg-gray-200" />;
 

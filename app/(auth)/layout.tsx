@@ -15,8 +15,11 @@ export default async function AuthLayout({
   return (
     <>
       <Header />
+      <nav aria-label="Navigation authentification" />
       <AuthGate isAuthenticated={!!currentUser}>
-        {children}
+        <main>
+          {children}
+        </main>
       </AuthGate>
       <Footer />
     </>
