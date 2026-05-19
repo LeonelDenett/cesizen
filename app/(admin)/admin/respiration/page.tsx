@@ -77,7 +77,10 @@ export default function AdminRespirationPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    const timer = setTimeout(fetchData, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'short', year: 'numeric',

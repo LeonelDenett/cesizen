@@ -59,7 +59,10 @@ export default function ChallengePanel({ exercises, onStartExercise }: Challenge
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    const timer = setTimeout(fetchData, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
   async function createChallenge() {
     const exercise = exercises.find(e => e.id === formData.exerciseId);

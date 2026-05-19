@@ -42,7 +42,8 @@ export default function AdminUsersPage() {
   }, [page]);
 
   useEffect(() => {
-    fetchUsers();
+    const timer = setTimeout(fetchUsers, 0);
+    return () => clearTimeout(timer);
   }, [fetchUsers]);
 
   async function handleToggleActive(userId: string, currentActive: boolean) {

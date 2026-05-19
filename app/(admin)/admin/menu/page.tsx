@@ -50,7 +50,8 @@ export default function AdminMenuPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    const timer = setTimeout(fetchData, 0);
+    return () => clearTimeout(timer);
   }, [fetchData]);
 
   function handleMoveUp(index: number) {

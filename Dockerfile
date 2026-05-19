@@ -15,14 +15,12 @@ COPY . .
 # Build sans secrets - utilise les valeurs par défaut
 # Les vrais secrets sont injectés en runtime via environment
 ARG DATABASE_URL
+ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 
-ENV DATABASE_URL=${DATABASE_URL:-}
+ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-key-for-build-only}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
-
-# Supprimer les variables de build pour éviter leur exposition dans les couches
-ENV DATABASE_URL=
-ENV NEXTAUTH_URL=
 
 RUN npm run build
 

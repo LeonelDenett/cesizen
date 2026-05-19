@@ -51,7 +51,10 @@ export default function AdminInfoPagesPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchPages(); }, [fetchPages]);
+  useEffect(() => {
+    const timer = setTimeout(fetchPages, 0);
+    return () => clearTimeout(timer);
+  }, [fetchPages]);
 
   function handleEdit(page: InfoPage) { setEditingPage(page); setShowForm(true); setError(''); }
   function handleNewPage() { setEditingPage(null); setShowForm(true); setError(''); }
