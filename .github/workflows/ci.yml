@@ -109,6 +109,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-frontend
     continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cesizen
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+          -p 5477:5432
     steps:
       - name: Checkout du dépôt
         uses: actions/checkout@v4
@@ -121,6 +134,21 @@ jobs:
 
       - name: Installation des dépendances
         run: npm ci
+
+      - name: Installation de ts-node
+        run: npm install -D ts-node
+
+      - name: Configuration des variables d'environnement
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5477/cesizen" >> $GITHUB_ENV
+          echo "NEXTAUTH_SECRET=dev-secret-key-for-ci" >> $GITHUB_ENV
+          echo "NEXTAUTH_URL=http://localhost:3333" >> $GITHUB_ENV
+
+      - name: Exécution des migrations
+        run: npx drizzle-kit migrate
+
+      - name: Exécution du seed
+        run: npx tsx lib/db/seed.ts
 
       - name: Installation des navigateurs
         run: npx playwright install --with-deps

@@ -21,6 +21,8 @@ export default defineConfig({
     command: 'npm run dev -- -p 3333',
     url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
+    stdout: process.env.CI ? 'pipe' : 'inherit',
+    stderr: process.env.CI ? 'pipe' : 'inherit',
   },
 });
