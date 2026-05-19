@@ -195,7 +195,7 @@ describe("Property 8: El perfil muestra los datos correctos del usuario", () => 
     const createdAtArb = fc.date({
       min: new Date("2020-01-01"),
       max: new Date("2025-12-31"),
-    });
+    }).filter((d) => !isNaN(d.getTime()));
 
     await fc.assert(
       fc.asyncProperty(userIdArb, nameArb, emailArb, createdAtArb, async (userId, name, email, createdAt) => {
