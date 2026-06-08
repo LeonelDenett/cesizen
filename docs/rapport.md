@@ -190,11 +190,30 @@ Le `Dockerfile` suit un pattern en **4 étapes** :
 | `builder` | `base` | Build Next.js en mode **standalone** (`output: 'standalone'`) |
 | `runner` | `base` | Image finale allégée avec utilisateur `nextjs` (UID 1001) |
 
+**Extrait du Dockerfile :**
+
+```dockerfile
+# Étape 4 : Runner (production)
+FROM base AS runner
+ENV NODE_ENV=production
+
+# Création d'un utilisateur non-root pour la sécurité
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Healthcheck pour Docker / orchestrateurs
+HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=5 \
+  CMD wget --spider -q http://127.0.0.1:3000/api/health || exit 1
+
+USER nextjs
+EXPOSE 3000
+```
+
 **Points de sécurité du Dockerfile :**
 
-- **Utilisateur non-root** (`nextjs:nodejs`) dans l'image finale.
-- **Image minimale** (Alpine Linux) réduisant la surface d'attaque.
-- **Pas de secrets embarqués** : les variables sensibles passent par `ARG` avec valeurs par défaut sécurisées.
+- **Utilisateur non-root** (`nextjs:nodejs`, UID 1001) dans l'image finale. Le conteneur ne s'exécute jamais en root, limitant les dégâts en cas de compromission.
+- **Image minimale** (Alpine Linux) réduisant la surface d'attaque (pas de shell inutile, pas d'outils système superflus).
+- **Pas de secrets embarqués** : les variables sensibles passent par `ARG` avec valeurs par défaut sécurisées (`build-time-secret-placeholder`).
 - **Healthcheck** applicatif sur `/api/health` (intervalle 15s, 5 retries).
 - **Script d'entrée** (`scripts/entrypoint.sh`) : attente de PostgreSQL, migrations, seed, démarrage serveur.
 
@@ -240,6 +259,64 @@ Trois environnements sont définis, chacun avec son propre fichier Docker Compos
   - Réseau isolé `cesizen-prod` (subnet 172.28.1.0/24).
 - **Déploiement local** : `./scripts/deploy-local.sh`
   - Vérifie `.env`, lance `docker compose up --build -d`, teste `/api/health`.
+
+### 7.4 Pourquoi trois fichiers Docker Compose ?
+
+On pourrait théoriquement n'utiliser qu'un seul fichier, mais en pratique chaque environnement a des besoins radicalement différents qui ne peuvent pas cohabiter dans un même fichier sans compromettre la sécurité ou la productivité.
+
+**`docker-compose.dev.yml` — Développement**
+
+```yaml
+app:
+  image: node:20-alpine
+  command: sh -c "npm install && npm run dev"
+  volumes:
+    - .:/app          # Montage du code source pour hot-reload
+    - node_modules:/app/node_modules
+  ports:
+    - "127.0.0.1:3000:3000"
+```
+
+Ce fichier monte le code source en volume (`volumes: .:/app`) pour que tout changement soit immédiatement visible. Ce n'est **pas applicable en production** car on ne veut pas que le code source soit mutable dans l'image.
+
+**`docker-compose.test.yml` — Recette / Tests**
+
+```yaml
+db-test:
+  ports:
+    - "127.0.0.1:5478:5432"   # Port 5478 isolé, base cesizen_test
+app-test:
+  command: ["tail", "-f", "/dev/null"]  # Conteneur actif pour exécuter les tests à la demande
+```
+
+Ce fichier utilise la **même image Docker que la production** (`Dockerfile` multi-étapes), mais avec une base de données dédiée (`cesizen_test`) et un port différent (`5478`). Cela évite de polluer la base de développement ou de production avec des données de test. L'override `command: tail -f /dev/null` garde le conteneur actif pour y exécuter les tests manuellement.
+
+**`docker-compose.yml` — Production**
+
+```yaml
+db:
+  ports:
+    - "127.0.0.1:5477:5432"
+app:
+  ports:
+    - "127.0.0.1:${APP_PORT:-3333}:3000"
+```
+
+### 7.5 Mesure de sécurité : le binding `127.0.0.1`
+
+Dans les trois fichiers, la base de données et l'application utilisent le binding **explicite** `127.0.0.1` :
+
+```yaml
+ports:
+  - "127.0.0.1:5477:5432"
+```
+
+**Pourquoi c'est critique ?**
+
+- **Avec `127.0.0.1:`** : le port n'est accessible que depuis la machine hôte elle-même (`localhost`). Aucune machine externe sur le réseau local ne peut se connecter à PostgreSQL.
+- **Sans `127.0.0.1:`** (syntaxe `5477:5432`) : Docker expose le port sur **toutes les interfaces** (`0.0.0.0`). N'importe quelle machine du même réseau peut alors tenter de se connecter à la base de données. Cela constitue une faille de sécurité majeure, notamment si la machine hôte est sur un réseau public ou partagé.
+
+Cette distinction est d'autant plus importante que PostgreSQL ne possède pas d'authentification réseau par défaut très restrictive. Limiter l'accès au `localhost` est la première ligne de défense contre les scans de ports et les tentatives d'intrusion.
 
 ---
 
@@ -442,6 +519,71 @@ Configurés dans `next.config.ts` (`async headers()`) :
 - **API** : pas de données sensibles en query string, validation systématique des entrées utilisateur.
 - **Logs** : pas de log de secrets, logs structurés facilitant l'analyse.
 - **Dépendances** : audit automatique dans la CI (`npm audit`), mises à jour automatiques via Dependabot.
+
+### 10.6 Sécurisation réseau et isolation Docker
+
+En plus du hardening applicatif, l'infrastructure Docker elle-même est sécurisée :
+
+**Isolation réseau par environnement**
+
+Chaque environnement dispose de son propre réseau Docker bridge isolé, empêchant la communication inter-environnements :
+
+```yaml
+# docker-compose.yml — Production
+networks:
+  cesizen-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
+```
+
+```yaml
+# docker-compose.dev.yml — Développement
+networks:
+  cesizen-dev:
+    driver: bridge
+```
+
+```yaml
+# docker-compose.test.yml — Recette
+networks:
+  cesizen-test:
+    driver: bridge
+```
+
+**Limitation des ressources**
+
+En production, chaque conteneur est contraint en CPU et mémoire pour éviter qu'un service ne monopolise les ressources de l'hôte :
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '1.0'
+      memory: 512M
+    reservations:
+      cpus: '0.25'
+      memory: 128M
+```
+
+Cela limite l'impact d'une attaque par déni de service (DoS) : même si un conteneur est saturé, il ne peut pas épuiser la mémoire ou le CPU de la machine hôte au complet.
+
+**Pas de port exposé publiquement**
+
+Tous les ports de la base de données (`5432`) et de l'application (`3000`) sont **uniquement accessibles via le reverse proxy** ou le `localhost`. Ni la DB ni l'app ne sont directement joignables depuis l'extérieur :
+
+```yaml
+# Base de données — accessible uniquement en localhost
+ports:
+  - "127.0.0.1:5477:5432"
+
+# Application — accessible uniquement en localhost (reverse proxy en amont)
+ports:
+  - "127.0.0.1:${APP_PORT:-3333}:3000"
+```
+
+En production, l'accès public se fait via un reverse proxy (Nginx ou Traefik) qui termine le TLS et forwarde vers le port local `127.0.0.1:3333`.
 
 ---
 
