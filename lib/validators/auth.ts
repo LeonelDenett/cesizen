@@ -3,10 +3,14 @@ import { z } from "zod";
 // Shared password validation schema with security rules
 const passwordSchema = z
   .string()
-  .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+  .min(12, "Le mot de passe doit contenir au moins 12 caractères")
   .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
   .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
-  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
+  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
+  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, "Le mot de passe doit contenir au moins un symbole");
+
+// Exported helper for runtime validation (not only Zod forms)
+export const isPasswordValid = (password: string): boolean => passwordSchema.safeParse(password).success;
 
 // Registration schema
 export const registerSchema = z.object({
