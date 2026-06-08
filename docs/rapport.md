@@ -502,6 +502,7 @@ Framework : **Jest** + **ts-jest** + **fast-check** (property-based testing).
 | Fichier de test | Couverture |
 |-------------------|------------|
 | `__tests__/unit/actions/info-pages.test.ts` | Création et validation des pages d'information |
+| `__tests__/unit/audit-logger.test.ts` | **Journalisation d'audit** — vérification du schema `audit_logs`, du logger Pino et des types d'actions (LOGIN, FAILED_LOGIN, ACCOUNT_DISABLED) |
 | `__tests__/properties/auth.property.test.ts` | Propriétés de l'authentification (validation email, hash bcrypt) |
 | `__tests__/properties/users.property.test.ts` | Propriétés des utilisateurs (unicité email, rôles) |
 | `__tests__/properties/security.property.test.ts` | Propriétés de sécurité (inputs, injection) |
@@ -510,7 +511,22 @@ Framework : **Jest** + **ts-jest** + **fast-check** (property-based testing).
 
 **Commande** : `npm run test`
 
-### 9.2 Tests end-to-end (Playwright)
+### 9.2 Tests de sécurité et journalisation
+
+Un test unitaire dédié (`__tests__/unit/audit-logger.test.ts`) couvre la journalisation des événements de sécurité :
+
+- **Schema de la base** : vérification que la table `audit_logs` possède les colonnes requises (`action`, `email`, `ipAddress`, `userAgent`, `success`, `details`, `createdAt`).
+- **Logger Pino** : vérification que le logger dispose des méthodes `info`, `warn`, `error`, `debug` et qu'il accepte des objets de contexte JSON.
+- **Types d'actions d'audit** : validation que les actions `LOGIN`, `FAILED_LOGIN`, `ACCOUNT_DISABLED` et `LOGOUT` respectent la limite de 50 caractères imposée par le schema.
+
+**Résultat des tests** (11 tests passent) :
+
+```
+Test Suites: 1 passed, 1 total
+Tests:       11 passed, 11 total
+```
+
+### 9.3 Tests end-to-end (Playwright)
 
 Framework : **Playwright** avec navigateur Chromium.
 
@@ -528,7 +544,9 @@ Framework : **Playwright** avec navigateur Chromium.
 
 **Commande** : `npm run test:e2e`
 
-### 9.3 Couverture de test
+> 🖼️ **Insérer ici une capture d'écran** : exemple de rapport Playwright avec un parcours de connexion réussi.
+
+### 9.4 Couverture de test
 
 Le pipeline CI génère un rapport de couverture Jest (`coverage/`) et archive le rapport Playwright (`playwright-report/`) pour analyse post-exécution.
 
