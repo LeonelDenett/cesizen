@@ -615,7 +615,34 @@ async headers() {
 
 > **Note** : `Strict-Transport-Security` (HSTS) est géré au niveau du reverse proxy (Nginx/Traefik) pour éviter de bloquer l'accès en développement local sans HTTPS.
 
-### 10.4 Gestion des données personnelles (RGPD)
+### 10.4 Segregation des secrets (pepper unique par utilisateur)
+
+Chaque utilisateur possède un **pepper unique** stocké dans une base SQLite séparée (`secrets.db`), jamais dans PostgreSQL. Le hash bcrypt stocke son propre sel internement.
+
+**Architecture :**
+
+```
+PostgreSQL (Neon)          SQLite (volume Docker séparé)
+├─ users.password_hash      ├─ user_peppers(user_id, pepper)
+│   (bcrypt avec sel)       │   (pepper unique par user)
+└─ autres données           └─ jamais en ligne avec PostgreSQL
+```
+
+**Pourquoi :** un attaquant qui vole uniquement PostgreSQL ne peut pas cracker les mots de passe sans accéder au volume SQLite où résident les peppers.
+
+**Implémentation :**
+- **Inscription** (`lib/actions/auth.ts`) : génération d'un pepper aléatoire (`crypto.randomBytes(32)`) → hash `bcrypt(password + pepper, 12)` → hash dans PostgreSQL, pepper dans SQLite.
+- **Connexion** (`lib/auth.ts`) : lecture du pepper depuis SQLite → `bcrypt.compare(password + pepper, hash)`.
+- **Reset de mot de passe** : nouveau pepper généré et mis à jour dans SQLite.
+- **Politique de mots de passe** : 12+ caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 symbole.
+
+**Seed :**
+- `admin@cesizen.fr` / `Admin1234!Secure`
+- `marie@cesizen.fr` / `User1234!Secure`
+
+> 🖼️ **Insérer ici une capture d'écran** : Drizzle Studio montrant la table `user_peppers` avec les peppers uniques de chaque utilisateur.
+
+### 10.5 Gestion des données personnelles (RGPD)
 
 **Données collectées** : nom, email (hash du mot de passe), préférences, émotions, logs de respiration, favoris.
 
