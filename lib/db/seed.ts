@@ -1,4 +1,6 @@
+import crypto from 'crypto';
 import { db } from "./index";
+import { sqliteDb } from "./sqlite";
 import {
   users,
   emotionsLevel1,
@@ -8,6 +10,7 @@ import {
   emotionLogs,
   breathingExercises,
 } from "./schema";
+import { userPeppers } from "./schema/sqlite-secrets";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
@@ -183,9 +186,9 @@ export async function seed() {
     console.log("✅ Émotions niveau 2");
 
     // ── 2. Utilisateurs ──
-    const adminHash = await bcrypt.hash("Admin123!", 10);
-    const userHash = await bcrypt.hash("User1234", 10);
-
+    // Admin avec pepper unique
+    const adminPepper = crypto.randomBytes(32).toString('hex');
+    const adminHash = await bcrypt.hash("Admin1234!Secure" + adminPepper, 12);
     await db
       .insert(users)
       .values({
@@ -196,6 +199,18 @@ export async function seed() {
       })
       .onConflictDoNothing({ target: users.email });
 
+    // Récupérer l'ID admin pour le pepper
+    const adminRows = await db.select().from(users).where(eq(users.email, "admin@cesizen.fr")).limit(1);
+    if (adminRows.length > 0) {
+      await sqliteDb.insert(userPeppers).values({
+        userId: adminRows[0].id,
+        pepper: adminPepper,
+      }).onConflictDoUpdate({ target: userPeppers.userId, set: { pepper: adminPepper } });
+    }
+
+    // Utilisateur standard avec pepper unique
+    const userPepper = crypto.randomBytes(32).toString('hex');
+    const userHash = await bcrypt.hash("User1234!Secure" + userPepper, 12);
     const [demoUser] = await db
       .insert(users)
       .values({
@@ -207,7 +222,14 @@ export async function seed() {
       .onConflictDoNothing({ target: users.email })
       .returning();
 
-    console.log("✅ Utilisateurs (admin@cesizen.fr / Admin123!, marie@cesizen.fr / User1234)");
+    if (demoUser) {
+      await sqliteDb.insert(userPeppers).values({
+        userId: demoUser.id,
+        pepper: userPepper,
+      }).onConflictDoUpdate({ target: userPeppers.userId, set: { pepper: userPepper } });
+    }
+
+    console.log("✅ Utilisateurs (admin@cesizen.fr / Admin1234!Secure, marie@cesizen.fr / User1234!Secure)");
 
     // ── 3. Pages d'information ──
     const existingPages = await db.select().from(infoPages);
