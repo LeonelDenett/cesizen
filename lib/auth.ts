@@ -6,6 +6,15 @@ import { db } from "@/lib/db";
 import { users, auditLogs } from "@/lib/db/schema";
 import logger from "@/lib/logger";
 
+// Helper: log audit event without breaking login if DB is unavailable
+async function logAudit(data: typeof auditLogs.$inferInsert) {
+  try {
+    await db.insert(auditLogs).values(data);
+  } catch {
+    // Fail-open: login must work even if audit table is down
+  }
+}
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -42,6 +51,8 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials, req) {
         const getClientInfo = () => {
+          // NextAuth v4 headers type is inconsistent across environments
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const h = (req as any)?.headers || {};
           const getHeader = (name: string): string | undefined => {
             if (typeof h.get === "function") return h.get(name) || undefined;
@@ -82,7 +93,7 @@ export const authOptions: AuthOptions = {
           .limit(1);
 
         if (!user) {
-          await db.insert(auditLogs).values({
+          await logAudit({
             action: "FAILED_LOGIN",
             email,
             ipAddress: ip,
@@ -95,7 +106,7 @@ export const authOptions: AuthOptions = {
         }
 
         if (!user.isActive) {
-          await db.insert(auditLogs).values({
+          await logAudit({
             userId: user.id,
             action: "ACCOUNT_DISABLED",
             email: user.email,
@@ -110,7 +121,7 @@ export const authOptions: AuthOptions = {
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isPasswordValid) {
-          await db.insert(auditLogs).values({
+          await logAudit({
             userId: user.id,
             action: "FAILED_LOGIN",
             email: user.email,
@@ -123,7 +134,7 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        await db.insert(auditLogs).values({
+        await logAudit({
           userId: user.id,
           action: "LOGIN",
           email: user.email,
