@@ -8,8 +8,18 @@ const config: Config = {
     "^@/(.*)$": "<rootDir>/$1",
   },
   moduleDirectories: ["node_modules", "lib", "components", "app"],
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
   testPathIgnorePatterns: ["/node_modules/", "<rootDir>/__tests__/setup.ts", "<rootDir>/__tests__/e2e/"],
   setupFilesAfterEnv: ["<rootDir>/__tests__/setup.ts"],
+  collectCoverageFrom: [
+    "app/**/*.ts",
+    "lib/**/*.ts",
+    "components/**/*.ts",
+    "!**/*.d.ts",
+    "!**/*.test.ts",
+    "!**/*.spec.ts",
+  ],
+  coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/", "/docs/", "/scripts/"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {
       "tsconfig": {
