@@ -7,3 +7,4 @@ export * from "./emotions";
 export * from "./emotion-logs";
 export * from "./breathing-challenges";
 export * from "./breathing-exercises";
+export * from "./audit-logs";
