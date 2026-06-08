@@ -3,8 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { sqliteDb } from "@/lib/db/sqlite";
 import { users, auditLogs } from "@/lib/db/schema";
+import { userPeppers } from "@/lib/db/schema/sqlite-secrets";
 import logger from "@/lib/logger";
+import { isPasswordValid } from "@/lib/validators/auth";
 
 // Helper: log audit event without breaking login if DB is unavailable
 async function logAudit(data: typeof auditLogs.$inferInsert) {
@@ -80,6 +83,11 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
+        if (!isPasswordValid(password)) {
+          logger.warn({ action: "FAILED_LOGIN", email, ip }, "Password does not meet complexity policy");
+          return null;
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
           logger.warn({ action: "FAILED_LOGIN", email, ip }, "Invalid email format");
@@ -119,8 +127,16 @@ export const authOptions: AuthOptions = {
           throw new Error("ACCOUNT_DISABLED");
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!isPasswordValid) {
+        // Retrieve unique pepper from segregated SQLite storage
+        const [pepperRow] = await sqliteDb
+          .select()
+          .from(userPeppers)
+          .where(eq(userPeppers.userId, user.id))
+          .limit(1);
+
+        const pepper = pepperRow?.pepper || '';
+        const passwordMatch = await bcrypt.compare(credentials.password + pepper, user.passwordHash);
+        if (!passwordMatch) {
           await logAudit({
             userId: user.id,
             action: "FAILED_LOGIN",
