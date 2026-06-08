@@ -190,52 +190,28 @@ Le `Dockerfile` suit un pattern en **4 étapes** :
 | `builder` | `base` | Build Next.js en mode **standalone** (`output: 'standalone'`) |
 | `runner` | `base` | Image finale allégée avec utilisateur `nextjs` (UID 1001) |
 
-**Extrait du Dockerfile :**
+**Extrait du Dockerfile (étapes clés) :**
 
 ```dockerfile
-# ---- Étape 2 : Dépendances ----
-FROM base AS deps
-COPY package.json package-lock.json ./
-# --ignore-scripts empêche l'exécution de scripts post-install malveillants
+# Étape deps : --ignore-scripts empêche l'exécution de scripts post-install malveillants
 RUN npm ci --ignore-scripts --prefer-offline
 
-# ---- Étape 3 : Builder ----
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Variables de build avec valeurs par défaut sécurisées (jamais de vrais secrets)
-ARG DATABASE_URL
+# Étape builder : variables de build avec placeholders sécurisés
 ARG NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
-ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-build-time-secret-placeholder}
-ENV NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
 
-RUN npm run build
-
-# ---- Étape 4 : Runner (production) ----
-FROM base AS runner
-ENV NODE_ENV=production
-
-# Création d'un utilisateur non-root pour la sécurité
+# Étape runner : utilisateur non-root + healthcheck
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-RUN apk add --no-cache netcat-openbsd
-
-# Copie des artefacts avec propriétaire nextjs:nodejs
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Healthcheck pour Docker / orchestrateurs
 HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=5 \
   CMD wget --spider -q http://127.0.0.1:3000/api/health || exit 1
 
 USER nextjs
 EXPOSE 3000
 ```
+
+> 🖼️ **Insérer ici une capture d'écran** : diagramme des 4 étapes du Dockerfile (base → deps → builder → runner).
 
 **Points de sécurité du Dockerfile :**
 
@@ -257,51 +233,26 @@ set -e
 DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
 DB_PORT=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
 
-if [ -z "$DB_HOST" ]; then DB_HOST="db"; fi
-if [ -z "$DB_PORT" ]; then DB_PORT="5432"; fi
-
-echo "⏳ Attente de PostgreSQL ($DB_HOST:$DB_PORT)..."
-MAX_RETRIES=30
-RETRIES=0
-
+# Attente de PostgreSQL (max 30 tentatives)
 until nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; do
   RETRIES=$((RETRIES + 1))
-  if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
-    echo "❌ PostgreSQL non disponible après $MAX_RETRIES tentatives. Abandon."
-    exit 1
-  fi
-  echo "   Tentative $RETRIES/$MAX_RETRIES..."
+  if [ "$RETRIES" -ge 30 ]; then exit 1; fi
   sleep 2
 done
 
-echo "✅ PostgreSQL est disponible !"
+# Migrations + seed idempotent
+npx drizzle-kit migrate || true
+npx tsx lib/db/seed.ts || true
 
-# Migrations
-echo "🔄 Exécution des migrations Drizzle..."
-if npx drizzle-kit migrate; then
-  echo "✅ Migrations appliquées."
-else
-  echo "⚠️ Aucune migration à appliquer ou erreur non bloquante."
-fi
-
-# Seed (idempotent)
-echo "🌱 Exécution du seed..."
-if npx tsx lib/db/seed.ts; then
-  echo "✅ Seed exécuté."
-else
-  echo "⚠️ Seed déjà présent ou erreur non bloquante."
-fi
-
-echo "🚀 Lancement de CESIZen sur le port $PORT..."
 exec node server.js
 ```
 
 **Points de sécurité :**
 
-- `set -e` : arrêt immédiat en cas d'erreur critique (évite de démarrer sur une base corrompue).
-- Parsing de `DATABASE_URL` : pas de variables séparées (`DB_HOST`, `DB_PORT`) qui pourraient diverger de l'URL réelle.
-- Boucle `nc -z` avec timeout : le conteneur ne démarre pas tant que la DB n'est pas joignable, évitant les crashloops inutiles.
-- Seed idempotent : le script de seed vérifie l'existence des données avant insertion (pas de doublons en cas de redémarrage).
+- `set -e` : arrêt immédiat en cas d'erreur critique.
+- Parsing de `DATABASE_URL` : pas de variables séparées qui pourraient diverger.
+- Boucle `nc -z` avec timeout : évite les crashloops au démarrage.
+- Seed idempotent : pas de doublons en cas de redémarrage.
 
 ---
 
@@ -343,73 +294,32 @@ Trois environnements sont définis, chacun avec son propre fichier Docker Compos
 services:
   db:
     image: postgres:16-alpine
-    container_name: cesizen-db-prod
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB:-cesizen}
     ports:
       - "127.0.0.1:5477:5432"
-    volumes:
-      - pgdata-prod:/var/lib/postgresql/data
-    networks:
-      - cesizen-prod
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-cesizen}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-build-placeholder}
-        NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3333}
-    container_name: cesizen-app-prod
-    restart: unless-stopped
     ports:
       - "127.0.0.1:${APP_PORT:-3333}:3000"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3333}
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - cesizen-prod
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 90s
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
-
-volumes:
-  pgdata-prod:
-    driver: local
 
 networks:
   cesizen-prod:
@@ -418,6 +328,8 @@ networks:
       config:
         - subnet: 172.28.1.0/24
 ```
+
+> 🖼️ **Insérer ici une capture d'écran** : diagramme d'architecture Docker (DB + App + réseau isolé).
 
 **Points de sécurité du compose :**
 
@@ -528,145 +440,32 @@ Le pipeline se déclenche sur :
 
 #### Job 4 — Scan de sécurité (`security-scan`)
 
-- **npm audit** (`--audit-level=moderate`) : détecte les vulnérabilités connues dans les dépendances.
-- **Trivy** (`aquasecurity/trivy-action`) : scan du filesystem au format SARIF.
-- Upload du rapport Trivy comme artefact.
+- **npm audit** (`--audit-level=high`) : détecte les vulnérabilités connues dans les dépendances. `|| true` empêche que des faux positifs bloquent le pipeline.
+- **Trivy** (`aquasecurity/trivy-action`) : scan du filesystem au format SARIF, archivé comme artefact.
 - **Objectif** : identifier les failles de sécurité avant la construction de l'image Docker.
-
-**Extrait du job `security-scan` :**
-
-```yaml
-security-scan:
-  name: 🛡️ Scan de sécurité
-  runs-on: ubuntu-latest
-  needs: [lint, build]
-  steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    - run: npm ci
-
-    - name: Audit npm (vulnérabilités)
-      run: npm audit --audit-level=high || true
-
-    - name: Scan Trivy (filesystem)
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-      continue-on-error: true
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: trivy-report
-        path: trivy-results.sarif
-      if: always()
-```
-
-> **Note** : `|| true` sur `npm audit` et `continue-on-error: true` sur Trivy empêchent que des faux positifs bloquent le pipeline, tout en archivant le rapport pour analyse manuelle.
 
 #### Job 5 — Build Docker (`docker-build`)
 
-- Setup Docker Buildx avec cache GitHub Actions (`type=gha`).
+- Setup Docker Buildx avec cache GitHub Actions (`cache-from: type=gha`).
 - Build de l'image multi-étapes (push = `false` en CI, uniquement build).
 - Tags : `cesizen:latest` et `cesizen:${{ github.sha }}`.
 - **Objectif** : valider que le Dockerfile produit une image fonctionnelle.
 
-**Extrait du job `docker-build` :**
-
-```yaml
-docker-build:
-  name: 🐳 Build image Docker
-  runs-on: ubuntu-latest
-  needs: build
-  steps:
-    - uses: actions/checkout@v4
-    - uses: docker/setup-buildx-action@v3
-
-    - name: Build de l'image (avec cache)
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: false
-        load: true
-        tags: |
-          cesizen:latest
-          cesizen:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        build-args: |
-          DATABASE_URL=postgresql://postgres:postgres@db:5432/cesizen
-          NEXTAUTH_SECRET=build-placeholder
-          NEXTAUTH_URL=http://localhost:3000
-```
-
-> **Note** : `cache-from: type=gha` et `cache-to: type=gha,mode=max` utilisent le cache intégré de GitHub Actions, réduisant drastiquement les temps de build Docker entre deux exécutions.
-
 #### Job 6 — Tests End-to-End (`e2e`)
 
 - Service PostgreSQL 16 Alpine lancé dans le runner (port 5477, healthcheck intégré).
-- Récupération du build précompilé (artefact `next-build`).
-- Injection des variables d'environnement (`DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`).
-- Exécution des migrations (`drizzle-kit migrate`) et du seed (`tsx lib/db/seed.ts`).
-- Installation des navigateurs Playwright (`npx playwright install --with-deps`).
-- Exécution de `npm run test:e2e` (Playwright, navigateur Chromium, baseURL `http://localhost:3333`).
+- Build de l'application, migrations, seed, puis tests Playwright (navigateur Chromium).
 - Upload du rapport Playwright (`playwright-report/`) comme artefact.
-- **Objectif** : valider les parcours utilisateurs complets (authentification, articles, admin) dans un environnement proche de la production.
+- **Objectif** : valider les parcours utilisateurs complets dans un environnement proche de la production.
 
 #### Job 7 — Déploiement démo (`deploy-demo`)
 
 - Condition : branche `main` OU déclenchement manuel.
 - Login au **GitHub Container Registry** (`ghcr.io`) via `GITHUB_TOKEN`.
 - Build et push de l'image Docker avec les tags `latest` et SHA du commit.
-- Cache Docker Buildx pour accélérer les builds successifs.
-- Résumé du déploiement affiché dans le step summary GitHub.
 - **Objectif** : publier une image prête à être déployée sur n'importe quel serveur Docker.
 
-**Extrait du job `deploy-demo` :**
-
-```yaml
-deploy-demo:
-  name: 🚀 Déploiement démo (GHCR)
-  runs-on: ubuntu-latest
-  needs: [lint, test-unit, build, e2e]
-  if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-  permissions:
-    contents: read
-    packages: write
-  steps:
-    - uses: actions/checkout@v4
-    - uses: docker/setup-buildx-action@v3
-
-    - name: Noms de registre en minuscules
-      run: |
-        echo "OWNER_LOWER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: |
-          ghcr.io/${{ env.OWNER_LOWER }}/cesizen:latest
-          ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        build-args: |
-          DATABASE_URL=postgresql://postgres:postgres@db:5432/cesizen
-          NEXTAUTH_SECRET=build-placeholder
-          NEXTAUTH_URL=http://localhost:3000
-```
-
-> **Note** : `OWNER_LOWER` est nécessaire car GitHub Container Registry exige des noms d'image en minuscules. Le `GITHUB_TOKEN` est fourni automatiquement par GitHub Actions, aucun secret supplémentaire n'est requis pour l'authentification GHCR.
+> 🖼️ **Insérer ici une capture d'écran** : vue du pipeline GitHub Actions (liste des jobs verts avec leurs icônes).
 
 ### 8.4 Schéma du pipeline
 
@@ -733,6 +532,8 @@ Framework : **Playwright** avec navigateur Chromium.
 
 Le pipeline CI génère un rapport de couverture Jest (`coverage/`) et archive le rapport Playwright (`playwright-report/`) pour analyse post-exécution.
 
+> 🖼️ **Insérer ici une capture d'écran** : rapport de couverture Jest (ex. `statements: 82%, branches: 76%`).
+
 ---
 
 ## 10. Sécurité et bonnes pratiques
@@ -763,49 +564,26 @@ Le pipeline CI génère un rapport de couverture Jest (`coverage/`) et archive l
 Configurés dans `next.config.ts` (`async headers()`) :
 
 ```typescript
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  output: "standalone",
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "images.unsplash.com" },
-    ],
-  },
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
-          },
-          {
-            key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://images.unsplash.com data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
-          },
-        ],
-      },
-    ];
-  },
-};
-
-export default nextConfig;
+async headers() {
+  return [
+    {
+      source: "/:path*",
+      headers: [
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        {
+          key: "Content-Security-Policy",
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://images.unsplash.com data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+        },
+      ],
+    },
+  ];
+}
 ```
+
+> 🖼️ **Insérer ici une capture d'écran** : onglet "Réseau" du navigateur montrant les headers HTTP de sécurité renvoyés par l'application.
 
 **Description des headers :**
 
@@ -820,6 +598,8 @@ export default nextConfig;
 ### 10.4 Gestion des données personnelles (RGPD)
 
 **Données collectées** : nom, email (hash du mot de passe), préférences, émotions, logs de respiration, favoris.
+
+> 🖼️ **Insérer ici une capture d'écran** : modal de consentement RGPD affichée sur la page d'accueil.
 
 **Mesures mises en œuvre** :
 
@@ -845,158 +625,62 @@ export default nextConfig;
 
 En plus du hardening applicatif, l'infrastructure Docker elle-même est sécurisée :
 
-**Isolation réseau par environnement**
+- **Réseaux isolés** : chaque environnement dispose de son propre bridge Docker (`cesizen-prod`, `cesizen-dev`, `cesizen-test`), empêchant toute communication inter-environnements.
+- **Limitation des ressources** : chaque conteneur est contraint en CPU (`1.0`) et mémoire (`512M`) pour éviter qu'un service ne monopolise l'hôte en cas d'attaque DoS.
+- **Pas de port exposé publiquement** : tous les ports sont bindés sur `127.0.0.1` ; l'accès public passe obligatoirement par un reverse proxy (Nginx/Traefik) qui termine le TLS.
 
-Chaque environnement dispose de son propre réseau Docker bridge isolé, empêchant la communication inter-environnements :
-
-```yaml
-# docker-compose.yml — Production
-networks:
-  cesizen-prod:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.1.0/24
-```
-
-```yaml
-# docker-compose.dev.yml — Développement
-networks:
-  cesizen-dev:
-    driver: bridge
-```
-
-```yaml
-# docker-compose.test.yml — Recette
-networks:
-  cesizen-test:
-    driver: bridge
-```
-
-**Limitation des ressources**
-
-En production, chaque conteneur est contraint en CPU et mémoire pour éviter qu'un service ne monopolise les ressources de l'hôte :
-
-```yaml
-deploy:
-  resources:
-    limits:
-      cpus: '1.0'
-      memory: 512M
-    reservations:
-      cpus: '0.25'
-      memory: 128M
-```
-
-Cela limite l'impact d'une attaque par déni de service (DoS) : même si un conteneur est saturé, il ne peut pas épuiser la mémoire ou le CPU de la machine hôte au complet.
-
-**Pas de port exposé publiquement**
-
-Tous les ports de la base de données (`5432`) et de l'application (`3000`) sont **uniquement accessibles via le reverse proxy** ou le `localhost`. Ni la DB ni l'app ne sont directement joignables depuis l'extérieur :
-
-```yaml
-# Base de données — accessible uniquement en localhost
-ports:
-  - "127.0.0.1:5477:5432"
-
-# Application — accessible uniquement en localhost (reverse proxy en amont)
-ports:
-  - "127.0.0.1:${APP_PORT:-3333}:3000"
-```
-
-En production, l'accès public se fait via un reverse proxy (Nginx ou Traefik) qui termine le TLS et forwarde vers le port local `127.0.0.1:3333`.
+> 🖼️ **Insérer ici une capture d'écran** : schéma réseau (reverse proxy → app → DB sur réseau isolé).
 
 ### 10.7 Authentification et autorisation
 
 L'authentification est gérée par **NextAuth.js** avec un provider `Credentials` (email + mot de passe). La configuration complète se trouve dans `lib/auth.ts`.
 
-**Extrait de `lib/auth.ts` :**
+**Extrait de `lib/auth.ts` (fonction `authorize`) :**
 
 ```typescript
-export const authOptions: AuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
-  },
-  pages: {
-    signIn: "/login",
-  },
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Mot de passe", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+async authorize(credentials) {
+  if (!credentials?.email || !credentials?.password) return null;
 
-        // Validation des entrées
-        const email = credentials.email.trim().toLowerCase();
-        const password = credentials.password;
+  // Validation stricte des entrées
+  const email = credentials.email.trim().toLowerCase();
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return null;
 
-        if (email.length > 254 || password.length > 128 || password.length < 1) {
-          return null;
-        }
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          return null;
-        }
+  if (!user || !user.isActive) return null;
 
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
+  const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+  if (!isValid) return null;
 
-        if (!user) {
-          return null;
-        }
-
-        if (!user.isActive) {
-          throw new Error("ACCOUNT_DISABLED");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = (user as unknown as { role: "utilisateur" | "administrateur" }).role;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-      }
-      return session;
-    },
-  },
-};
+  return { id: user.id, name: user.name, email: user.email, role: user.role };
+}
 ```
+
+**Callbacks JWT / Session :**
+
+```typescript
+callbacks: {
+  async jwt({ token, user }) {
+    if (user) {
+      token.id = user.id;
+      token.role = user.role;
+    }
+    return token;
+  },
+  async session({ session, token }) {
+    session.user.id = token.id;
+    session.user.role = token.role;
+    return session;
+  },
+}
+```
+
+> 🖼️ **Insérer ici une capture d'écran** : diagramme de flux d'authentification (login → validation → JWT → session).
 
 **Points de sécurité de l'authentification :**
 
@@ -1014,6 +698,8 @@ export const authOptions: AuthOptions = {
 ### 11.1 Gestion des tickets (GitHub Issues)
 
 **Outil** : GitHub Issues + GitHub Projects (tableau Kanban intégré au dépôt).
+
+> 🖼️ **Insérer ici une capture d'écran** : tableau Kanban GitHub Projects (colonnes To do / In progress / Done).
 
 **Labels configurés** :
 - `bug` / `evolution` / `security` / `debt`
