@@ -526,6 +526,8 @@ Test Suites: 1 passed, 1 total
 Tests:       11 passed, 11 total
 ```
 
+> **Visualisation des données** : `npx drizzle-kit studio` lance une interface web (localhost:4983) permettant de consulter la table `audit_logs`, de vérifier que les tentatives de connexion sont bien enregistrées et de valider que le schema correspond aux attentes des tests.
+
 ### 9.3 Tests end-to-end (Playwright)
 
 Framework : **Playwright** avec navigateur Chromium.

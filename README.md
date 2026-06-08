@@ -183,6 +183,7 @@ PUSH=true ./scripts/build-and-push.sh
 | `npm run db:generate` | Génération des migrations Drizzle |
 | `npm run db:migrate` | Application des migrations |
 | `npm run db:seed` | Seed de la base de données |
+| `npx drizzle-kit studio` | UI web pour visualiser et modifier les tables (localhost:4983) |
 
 ---
 
