@@ -17,12 +17,10 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: process.env.CI ? 'node .next/standalone/server.js' : 'npm run dev -- -p 3333',
+  webServer: process.env.CI ? undefined : {
+    command: 'npm run dev -- -p 3333',
     url: 'http://localhost:3333',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 180_000,
-    stdout: process.env.CI ? 'pipe' : 'ignore',
-    stderr: process.env.CI ? 'pipe' : 'ignore',
   },
 });

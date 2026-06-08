@@ -252,8 +252,19 @@ jobs:
       - name: Installation des navigateurs Playwright
         run: npx playwright install --with-deps
 
+      - name: Démarrage du serveur E2E
+        run: |
+          PORT=3333 nohup node .next/standalone/server.js > server.log 2>&1 &
+          sleep 3
+          curl -sf http://localhost:3333/api/health || sleep 3
+          curl -sf http://localhost:3333/api/health || (cat server.log && exit 1)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5477/cesizen
+          NEXTAUTH_SECRET: ci-secret-key-min-32-characters-long-string
+          NEXTAUTH_URL: http://localhost:3333
+
       - name: Lancement des tests E2E
-        run: npm run test:e2e
+        run: npx playwright test
 
       - name: Upload du rapport Playwright
         uses: actions/upload-artifact@v4
