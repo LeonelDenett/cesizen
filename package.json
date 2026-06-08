@@ -10,6 +10,7 @@
     "test": "jest",
     "test:e2e": "playwright test",
     "db:seed": "npx tsx lib/db/seed.ts",
+    "db:reset": "npx tsx scripts/reset-db.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
