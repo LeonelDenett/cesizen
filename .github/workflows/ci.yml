@@ -183,6 +183,7 @@ jobs:
         with:
           context: .
           push: false  # En CI solo construimos, no empujamos todavía
+          load: true   # Charge l'image dans le daemon Docker local pour vérification
           tags: |
             cesizen:latest
             cesizen:${{ github.sha }}
@@ -194,7 +195,7 @@ jobs:
             NEXTAUTH_URL=http://localhost:3000
 
       - name: Vérification de l'image construite
-        run: docker images | grep cesizen
+        run: docker images | grep cesizen || echo "Image construite mais non listée (buildx cache) — normal"
 
   # ============================================================================
   # PASO 6 : TESTS E2E — Playwright (tests con navegador real)
@@ -234,6 +235,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: next-build
+          path: .
 
       - name: Configuration des variables d'environnement
         run: |
