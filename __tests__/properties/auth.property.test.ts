@@ -11,30 +11,36 @@ import { registerSchema, resetPasswordConfirmSchema } from "@/lib/validators/aut
  * the password validation function must return an invalid result.
  */
 
-// Generator: passwords that are too short (0-7 chars)
-const tooShortPassword = fc.string({ minLength: 0, maxLength: 7 });
+// Generator: passwords that are too short (0-11 chars)
+const tooShortPassword = fc.string({ minLength: 0, maxLength: 11 });
 
-// Generator: 8+ char passwords missing uppercase (only lowercase + digits, must have both)
+// Generator: 12+ char passwords missing uppercase (only lowercase + digits + symbols, must have lower + digit + symbol)
 const noUppercasePassword = fc
-  .stringMatching(/^[a-z0-9]{8,50}$/)
-  .filter((s) => /[a-z]/.test(s) && /[0-9]/.test(s));
+  .stringMatching(/^[a-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{12,50}$/)
+  .filter((s) => /[a-z]/.test(s) && /[0-9]/.test(s) && /[^a-z0-9]/.test(s));
 
-// Generator: 8+ char passwords missing lowercase (only uppercase + digits, must have both)
+// Generator: 12+ char passwords missing lowercase (only uppercase + digits + symbols, must have upper + digit + symbol)
 const noLowercasePassword = fc
-  .stringMatching(/^[A-Z0-9]{8,50}$/)
-  .filter((s) => /[A-Z]/.test(s) && /[0-9]/.test(s));
+  .stringMatching(/^[A-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{12,50}$/)
+  .filter((s) => /[A-Z]/.test(s) && /[0-9]/.test(s) && /[^A-Z0-9]/.test(s));
 
-// Generator: 8+ char passwords missing digits (only letters, must have upper + lower)
+// Generator: 12+ char passwords missing digits (only letters + symbols, must have upper + lower + symbol)
 const noDigitPassword = fc
-  .stringMatching(/^[a-zA-Z]{8,50}$/)
-  .filter((s) => /[a-z]/.test(s) && /[A-Z]/.test(s));
+  .stringMatching(/^[a-zA-Z!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{12,50}$/)
+  .filter((s) => /[a-z]/.test(s) && /[A-Z]/.test(s) && /[^a-zA-Z]/.test(s));
+
+// Generator: 12+ char passwords missing symbols (only letters + digits, must have upper + lower + digit)
+const noSymbolPassword = fc
+  .stringMatching(/^[a-zA-Z0-9]{12,50}$/)
+  .filter((s) => /[a-z]/.test(s) && /[A-Z]/.test(s) && /[0-9]/.test(s));
 
 // Combine all weak password generators
 const weakPassword = fc.oneof(
   tooShortPassword,
   noUppercasePassword,
   noLowercasePassword,
-  noDigitPassword
+  noDigitPassword,
+  noSymbolPassword
 );
 
 // Valid base data so we isolate password validation
@@ -97,6 +103,23 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+jest.mock("@/lib/db/sqlite", () => ({
+  sqliteDb: {
+    select: jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnValue({
+          limit: jest.fn().mockResolvedValue([{ pepper: "test-pepper-32-chars-long-string-here" }]),
+        }),
+      }),
+    }),
+    insert: jest.fn().mockReturnValue({
+      values: jest.fn().mockReturnValue({
+        onConflictDoUpdate: jest.fn().mockResolvedValue(undefined),
+      }),
+    }),
+  },
+}));
+
 jest.mock("bcryptjs", () => ({
   compare: jest.fn(),
   hash: jest.fn(),
@@ -112,10 +135,20 @@ const credentialsProvider = authOptions.providers.find(
 ) as { options: { authorize: (credentials: { email: string; password: string }) => Promise<unknown> } };
 const authorize = credentialsProvider.options.authorize;
 
+// Generator: valid passwords meeting the 12+ policy (upper, lower, digit, symbol)
+const validPasswordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+const arbPassword = fc.array(fc.constantFrom(...validPasswordChars), { minLength: 12, maxLength: 50 })
+  .map((arr) => arr.join(""))
+  .filter((pwd) =>
+    /[a-z]/.test(pwd) &&
+    /[A-Z]/.test(pwd) &&
+    /[0-9]/.test(pwd) &&
+    /[^A-Za-z0-9]/.test(pwd)
+  );
+
 // Generators for Properties 5 & 6
 const arbEmail = fc.emailAddress();
 const arbName = fc.string({ minLength: 1, maxLength: 100 });
-const arbPassword = fc.string({ minLength: 8, maxLength: 50 });
 const arbUUID = fc.uuid();
 
 // Helper to build a mock user row
@@ -299,16 +332,17 @@ describe("Property 6: Credenciales inválidas producen error genérico", () => {
 
 // --- Generators for Properties 1 & 4 ---
 
-// Valid password: 8+ chars, at least one uppercase, one lowercase, one digit
+// Valid password: 12+ chars, at least one uppercase, one lowercase, one digit, one symbol
 const validPasswordArb = fc
   .tuple(
     fc.stringMatching(/^[A-Z]{1,3}$/),
     fc.stringMatching(/^[a-z]{1,3}$/),
     fc.stringMatching(/^[0-9]{1,3}$/),
-    fc.stringMatching(/^[A-Za-z0-9]{1,11}$/)
+    fc.stringMatching(/^[A-Za-z0-9]{1,8}$/),
+    fc.stringMatching(/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{1,3}$/)
   )
-  .map(([upper, lower, digit, rest]) => upper + lower + digit + rest)
-  .filter((s) => s.length >= 8 && /[A-Z]/.test(s) && /[a-z]/.test(s) && /[0-9]/.test(s));
+  .map(([upper, lower, digit, rest, symbol]) => upper + lower + digit + rest + symbol)
+  .filter((s) => s.length >= 12 && /[A-Z]/.test(s) && /[a-z]/.test(s) && /[0-9]/.test(s) && /[^A-Za-z0-9]/.test(s));
 
 const validNameArb = fc.stringMatching(/^[A-Za-zÀ-ÿ ]{1,50}$/).filter((s) => s.trim().length > 0);
 
@@ -325,7 +359,7 @@ let lastInsertedValues: Record<string, unknown> | null = null;
 // Mock insert chain for registration tests
 const mockRegInsertValues = jest.fn((values: Record<string, unknown>) => {
   lastInsertedValues = values;
-  return Promise.resolve();
+  return { returning: jest.fn().mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000001" }]) };
 });
 const mockRegInsert = jest.fn(() => ({ values: mockRegInsertValues }));
 
@@ -358,7 +392,7 @@ describe("Property 1: El registro crea un usuario válido", () => {
           (db as unknown as { insert: jest.Mock }).insert = mockRegInsert;
           mockRegInsertValues.mockImplementation((values: Record<string, unknown>) => {
             lastInsertedValues = values;
-            return Promise.resolve();
+            return { returning: jest.fn().mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000001" }]) };
           });
 
           // Mock bcrypt.hash to return a realistic bcrypt hash
@@ -423,7 +457,7 @@ describe("Property 4: Las contraseñas se almacenan como hash bcrypt", () => {
           (db as unknown as { insert: jest.Mock }).insert = mockRegInsert;
           mockRegInsertValues.mockImplementation((values: Record<string, unknown>) => {
             lastInsertedValues = values;
-            return Promise.resolve();
+            return { returning: jest.fn().mockResolvedValue([{ id: "00000000-0000-0000-0000-000000000001" }]) };
           });
 
           // Mock bcrypt.hash: return a realistic bcrypt hash with proper prefix
@@ -448,13 +482,10 @@ describe("Property 4: Las contraseñas se almacenan como hash bcrypt", () => {
           // Must NEVER match the plaintext password
           expect(storedHash).not.toBe(password);
 
-          // Verify bcrypt.hash was called with the plaintext password and cost >= 10
-          expect((bcrypt as unknown as { hash: jest.Mock }).hash).toHaveBeenCalledWith(
-            password,
-            expect.any(Number)
-          );
-          const hashCost = (bcrypt as unknown as { hash: jest.Mock }).hash.mock.calls[0][1];
-          expect(hashCost).toBeGreaterThanOrEqual(10);
+          // Verify bcrypt.hash was called with password+pepper and cost 12
+          const hashCall = (bcrypt as unknown as { hash: jest.Mock }).hash.mock.calls[0];
+          expect(hashCall[0]).toContain(password);
+          expect(hashCall[1]).toBe(12);
         }
       ),
       { numRuns: 100 }
@@ -803,8 +834,10 @@ describe("Property 11: Round-trip de token de reinicio de contraseña", () => {
           // (a) Confirm must succeed
           expect(confirmResult!.success).toBe(true);
 
-          // (b) bcrypt.hash was called with the new password
-          expect((bcrypt as unknown as { hash: jest.Mock }).hash).toHaveBeenCalledWith(newPassword, 10);
+          // (b) bcrypt.hash was called with newPassword+pepper and cost 12
+          const hashCall = (bcrypt as unknown as { hash: jest.Mock }).hash.mock.calls[0];
+          expect(hashCall[0]).toContain(newPassword);
+          expect(hashCall[1]).toBe(12);
 
           // (c) Token must be marked as used (one of the update calls sets used: true)
           const tokenUsedUpdate = updateCalls.find((call) => call.used === true);
@@ -902,7 +935,7 @@ describe("Property 12: Solo el último token de reinicio es válido", () => {
 
             const oldResult = await confirmPasswordReset(
               undefined,
-              makeFormData({ token: oldToken, password: "NewPass1234" })
+              makeFormData({ token: oldToken, password: "NewPass1234!" })
             );
 
             // Old token must be rejected
@@ -932,7 +965,7 @@ describe("Property 12: Solo el último token de reinicio es válido", () => {
 
           const latestResult = await confirmPasswordReset(
             undefined,
-            makeFormData({ token: latestToken, password: "NewPass1234" })
+            makeFormData({ token: latestToken, password: "NewPass1234!" })
           );
 
           // Latest token must succeed

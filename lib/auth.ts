@@ -7,7 +7,6 @@ import { sqliteDb } from "@/lib/db/sqlite";
 import { users, auditLogs } from "@/lib/db/schema";
 import { userPeppers } from "@/lib/db/schema/sqlite-secrets";
 import logger from "@/lib/logger";
-import { isPasswordValid } from "@/lib/validators/auth";
 
 // Helper: log audit event without breaking login if DB is unavailable
 async function logAudit(data: typeof auditLogs.$inferInsert) {
@@ -80,11 +79,6 @@ export const authOptions: AuthOptions = {
 
         if (email.length > 254 || password.length > 128 || password.length < 1) {
           logger.warn({ action: "FAILED_LOGIN", email, ip }, "Invalid input length");
-          return null;
-        }
-
-        if (!isPasswordValid(password)) {
-          logger.warn({ action: "FAILED_LOGIN", email, ip }, "Password does not meet complexity policy");
           return null;
         }
 
