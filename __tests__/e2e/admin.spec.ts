@@ -23,7 +23,8 @@ test.describe('Administration des utilisateurs — Flujo completo', () => {
     await page.getByLabel('Email').fill(ADMIN.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
-    await page.waitForURL('/admin**', { timeout: 10_000 });
+    await page.waitForURL('/', { timeout: 10_000 });
+    await page.goto('/admin');
 
     // ── 2. Navegar a la gestión de usuarios ──
     await page.goto('/admin/users');

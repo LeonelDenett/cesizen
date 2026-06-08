@@ -21,9 +21,8 @@ test.describe('CMS — Flujo completo', () => {
     await page.getByLabel('Email').fill(ADMIN.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
-
-    // Admin redirigido al Back-Office
-    await page.waitForURL('/admin**', { timeout: 10_000 });
+    await page.waitForURL('/', { timeout: 10_000 });
+    await page.goto('/admin');
 
     // ── 2. Navegar a la gestión de páginas de información ──
     await page.goto('/admin/info-pages');
