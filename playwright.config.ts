@@ -18,11 +18,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev -- -p 3333',
+    command: process.env.CI ? 'npm run start -- -p 3333' : 'npm run dev -- -p 3333',
     url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
-    stdout: process.env.CI ? 'pipe' : 'inherit',
-    stderr: process.env.CI ? 'pipe' : 'inherit',
+    stdout: process.env.CI ? 'pipe' : 'ignore',
+    stderr: process.env.CI ? 'pipe' : 'ignore',
   },
 });

@@ -1,12 +1,50 @@
+# Dépendances
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build / output
 .next
+out
+build
+dist
+
+# Environnement
+.env*
+!.env.example
+
+# Git
 .git
 .gitignore
-.env.local
+.gitattributes
+
+# Tests
+coverage
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
 playwright-report
 test-results
-__tests__
+
+# Documentation (hors README pour référence dans l'image)
+docs
+tickets
 *.md
 !README.md
-.kiro
+
+# Éditeurs / IDE
 .vscode
+.idea
+*.swp
+*.swo
+
+# Divers
+.DS_Store
+*.pem
+.kiro
+.github
+scripts/entrypoint.sh.bak

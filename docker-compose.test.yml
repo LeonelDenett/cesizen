@@ -1,0 +1,68 @@
+# =============================================================================
+# CESIZen - Docker Compose : ENVIRONNEMENT DE TEST / RECETTE
+# =============================================================================
+# Objectif : exécuter les tests (unitaires + E2E) dans un environnement isolé
+#            proche de la production, sans polluer dev ni prod.
+# Usage :
+#   docker compose -f docker-compose.test.yml up --build -d
+#   docker compose -f docker-compose.test.yml exec app sh
+#   # puis : npm run test  ou  npm run test:e2e
+# =============================================================================
+
+services:
+  db-test:
+    image: postgres:16-alpine
+    container_name: cesizen-db-test
+    restart: "no"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cesizen_test
+    ports:
+      - "127.0.0.1:5478:5432"
+    volumes:
+      - pgdata-test:/var/lib/postgresql/data
+    networks:
+      - cesizen-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cesizen_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://postgres:postgres@db-test:5432/cesizen_test
+        NEXTAUTH_SECRET: test-secret-key-min-32-characters
+        NEXTAUTH_URL: http://localhost:3000
+    container_name: cesizen-app-test
+    restart: "no"
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@db-test:5432/cesizen_test
+      NEXTAUTH_SECRET: test-secret-key-min-32-characters
+      NEXTAUTH_URL: http://localhost:3001
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cesizen_test
+    depends_on:
+      db-test:
+        condition: service_healthy
+    networks:
+      - cesizen-test
+    # Override du CMD pour garder le conteneur actif pendant les tests
+    command: ["tail", "-f", "/dev/null"]
+
+volumes:
+  pgdata-test:
+    driver: local
+
+networks:
+  cesizen-test:
+    driver: bridge

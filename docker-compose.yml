@@ -1,29 +1,52 @@
+# =============================================================================
+# CESIZen - Docker Compose : ENVIRONNEMENT DE PRODUCTION
+# =============================================================================
+# Objectif : déployer l'application en conditions réelles avec persistance DB.
+# Usage :
+#   cp .env.example .env
+#   docker compose up --build -d
+# =============================================================================
+
 services:
   db:
     image: postgres:16-alpine
+    container_name: cesizen-db-prod
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB: ${POSTGRES_DB:-cesizen}
     ports:
       - "127.0.0.1:5477:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-prod:/var/lib/postgresql/data
+    networks:
+      - cesizen-prod
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-cesizen}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
       args:
+        # Valeurs de build (peuvent être identiques au runtime ou placeholders)
         DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-for-build}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-build-placeholder}
         NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3333}
+    container_name: cesizen-app-prod
     restart: unless-stopped
     ports:
       - "127.0.0.1:${APP_PORT:-3333}:3000"
@@ -38,6 +61,30 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - cesizen-prod
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
 volumes:
-  pgdata:
+  pgdata-prod:
+    driver: local
+
+networks:
+  cesizen-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24

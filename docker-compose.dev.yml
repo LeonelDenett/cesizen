@@ -1,6 +1,15 @@
+# =============================================================================
+# CESIZen - Docker Compose : ENVIRONNEMENT DE DÉVELOPPEMENT
+# =============================================================================
+# Objectif : hot-reload du code source avec montage de volume.
+# Usage :
+#   docker compose -f docker-compose.dev.yml up
+# =============================================================================
+
 services:
   db:
     image: postgres:16-alpine
+    container_name: cesizen-db-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -10,14 +19,18 @@ services:
       - "127.0.0.1:5477:5432"
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
+    networks:
+      - cesizen-dev
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cesizen"]
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
   app:
     image: node:20-alpine
+    container_name: cesizen-app-dev
     working_dir: /app
     command: sh -c "npm install && npm run dev"
     ports:
@@ -26,13 +39,22 @@ services:
       - .:/app
       - node_modules:/app/node_modules
     environment:
+      NODE_ENV: development
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-key}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-key-min-32-characters}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - cesizen-dev
 
 volumes:
   pgdata-dev:
+    driver: local
   node_modules:
+    driver: local
+
+networks:
+  cesizen-dev:
+    driver: bridge

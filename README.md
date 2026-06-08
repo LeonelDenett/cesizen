@@ -1,52 +1,174 @@
-# Cesizen - Application de gestion de notes
+# CESIZen — Application de bien-être
 
-Application Next.js pour la gestion de notes avec authentification et base de données PostgreSQL.
+Application Next.js pour la gestion du bien-être (exercices de respiration, suivi des émotions, défis) avec authentification et base de données PostgreSQL.
 
 ## Stack technique
 
-- **Frontend:** Next.js 16, React 19, Tailwind CSS
-- **Backend:** Next.js API Routes
-- **Base de données:** PostgreSQL avec Drizzle ORM
-- **Authentification:** NextAuth.js
-- **Tests:** Jest, Playwright
+- **Frontend :** Next.js 16, React 19, Tailwind CSS
+- **Backend :** Next.js API Routes
+- **Base de données :** PostgreSQL 16 avec Drizzle ORM
+- **Authentification :** NextAuth.js
+- **Tests :** Jest (unitaires), Playwright (E2E)
+- **Déploiement :** Docker multi-étapes + Docker Compose
+- **CI/CD :** GitHub Actions
 
-## Installation
+---
 
-### Prérequis
+## Prérequis
 
 - Node.js 20+
-- Docker et Docker Compose
+- Docker & Docker Compose
+- (Optionnel) npm ou pnpm
 
-### Configuration
+---
 
-1. Copier le fichier d'exemple:
+## Configuration
+
+1. Copier le fichier d'exemple :
 ```bash
-cp .env.example .env.local
+cp .env.example .env.local   # dev local
+cp .env.example .env         # Docker Compose production
 ```
 
-2. Modifier les variables d'environnement dans `.env.local`:
+2. Modifier les variables sensibles :
 ```env
 POSTGRES_PASSWORD=votre-mot-de-passe-securise
 NEXTAUTH_SECRET=votre-secret-min-32-caracteres
+APP_PORT=3333
 ```
 
-### Lancement en développement
+> **Attention** : `.env.local` et `.env` ne doivent **jamais** être versionnés.
+
+---
+
+## Lancement en développement
+
+### Avec Docker Compose (recommandé)
 
 ```bash
-# Avec Docker Compose
-docker-compose -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml up
+```
 
-# Ou en local
+Accès : [http://localhost:3000](http://localhost:3000)  
+La base de données est exposée sur `127.0.0.1:5477`.
+
+### En local (hors Docker)
+
+```bash
 npm install
 npm run dev
 ```
 
-### Lancement en production
+Nécessite un PostgreSQL local accessible via `DATABASE_URL`.
+
+---
+
+## Lancement en production (local / démonstration)
+
+Un script automatisé est fourni :
 
 ```bash
-# Build et lancement
-docker-compose up --build
+./scripts/deploy-local.sh
 ```
+
+Ce script :
+- vérifie la présence du fichier `.env`,
+- lance `docker compose up --build -d`,
+- attend le démarrage et teste l'endpoint `/api/health`.
+
+Accès : [http://127.0.0.1:3333](http://127.0.0.1:3333) (ou le port défini dans `APP_PORT`).
+
+### Arrêt
+
+```bash
+docker compose down        # arrêt
+docker compose down -v     # arrêt + suppression des volumes (données)
+```
+
+---
+
+## Tests
+
+### Unitaires
+
+```bash
+npm run test
+```
+
+### End-to-end (Playwright)
+
+```bash
+npx playwright install --with-deps   # première installation uniquement
+npm run test:e2e
+```
+
+### Environnement de test isolé (Docker)
+
+```bash
+docker compose -f docker-compose.test.yml up --build -d
+docker compose -f docker-compose.test.yml exec app-test sh
+# npm run test
+# npm run test:e2e
+```
+
+---
+
+## CI/CD (GitHub Actions)
+
+Le pipeline se déclenche sur :
+- Push / Pull Request vers `main` ou `develop`
+- Déclenchement manuel (`workflow_dispatch`)
+
+### Étapes du pipeline
+
+| Étape | Description | Outil |
+|-------|-------------|-------|
+| 🔍 **Lint** | Vérification ESLint | ESLint |
+| 🧪 **Tests unitaires** | Jest + couverture | Jest |
+| 🏗️ **Build** | Compilation Next.js standalone | Next.js |
+| 🛡️ **Scan sécurité** | Audit npm + scan Trivy | npm audit, Trivy |
+| 🐳 **Docker build** | Image multi-étapes avec cache | Docker Buildx |
+| 🎭 **Tests E2E** | Playwright avec base PostgreSQL | Playwright |
+| 🚀 **Déploiement démo** | Push image vers GHCR | GitHub Actions |
+
+### Image Docker
+
+```bash
+# Construction locale
+docker build -t cesizen:latest .
+
+# Build + push (script fourni)
+PUSH=true ./scripts/build-and-push.sh
+```
+
+---
+
+## Architecture Docker
+
+### Dockerfile (multi-étapes)
+
+1. **Base** : `node:20-alpine`
+2. **Deps** : installation des dépendances (`npm ci`)
+3. **Builder** : build Next.js en mode `standalone`
+4. **Runner** : image allégée avec utilisateur non-root (`nextjs`), healthcheck et script d'entrée (`entrypoint.sh`)
+
+### Points de sécurité
+
+- Utilisateur non-root (UID 1001)
+- Aucun secret compilé dans l'image (passage par `ARG` + valeurs par défaut)
+- Healthcheck applicatif sur `/api/health`
+- Ports bindés sur `127.0.0.1` (pas d'exposition publique directe)
+- Réseaux Docker isolés par environnement
+
+---
+
+## Documentation du projet
+
+- [`docs/deployment-plan.md`](docs/deployment-plan.md) : Plan de déploiement, sécurisation et maintenance
+- [`docs/workflow.md`](docs/workflow.md) : Flux de travail (ticket → merge)
+- [`docs/tickets/`](docs/tickets/) : Exemples de tickets (bug / évolution)
+
+---
 
 ## Commandes disponibles
 
@@ -54,55 +176,26 @@ docker-compose up --build
 |----------|-------------|
 | `npm run dev` | Mode développement |
 | `npm run build` | Build production |
-| `npm run start` | Lancement production |
+| `npm run start` | Démarrage production |
 | `npm run lint` | Vérification du code |
 | `npm run test` | Tests unitaires |
 | `npm run test:e2e` | Tests E2E |
-| `npm run db:generate` | Génération migrations Drizzle |
-| `npm run db:migrate` | Application migrations |
+| `npm run db:generate` | Génération des migrations Drizzle |
+| `npm run db:migrate` | Application des migrations |
 | `npm run db:seed` | Seed de la base de données |
 
-## CI/CD
+---
 
-### GitHub Actions
+## Sécurité & RGPD
 
-Le pipeline se déclenche sur:
-- Push vers `main` ou `develop`
-- Pull requests vers `main` ou `develop`
+- Les données sensibles sont dans `.env.local` (non versionné).
+- Les mots de passe sont hashés avec **bcryptjs**.
+- Les sessions sont signées avec **NEXTAUTH_SECRET** (32+ caractères).
+- L'application inclut une **modal de consentement RGPD**.
+- Endpoint `/api/account` permettant la suppression de compte (droit à l'effacement).
 
-Étapes:
-1. **Installation** - Dépendances npm
-2. **Lint** - Vérification ESLint
-3. **Test** - Tests unitaires Jest
-4. **Build** - Build Next.js
-5. **Docker** - Construction image
-6. **E2E** - Tests Playwright
+---
 
-## Structure du projet
+## Licence
 
-```
-├── .github/workflows/    # GitHub Actions
-├── docs/                 # Documentation
-│   ├── tickets/          # Suivi des tickets
-│   └── workflow.md       # Flux de travail
-├── lib/                  # Code backend
-│   └── db/               # Schéma et config Drizzle
-├── public/               # Assets statiques
-├── src/                  # Code source Next.js
-├── Dockerfile            # Image de production
-├── docker-compose.yml   # Configuration production
-└── .env.example          # Template de configuration
-```
-
-## Gestion des tickets
-
-Voir [docs/workflow.md](docs/workflow.md) pour le flux de travail ticket → merge.
-
-Tickets disponibles dans [docs/tickets/](docs/tickets/).
-
-## Sécurité
-
-- Les variables sensibles sont dans `.env.local` (non versionné)
-- Ports exposés uniquement sur `127.0.0.1`
-- Secrets non inclus dans les couches Docker
-- Utilisateur non-root dans le conteneur
+Projet académique — CESI.
