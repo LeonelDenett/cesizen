@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 const ADMIN = {
   email: 'admin@cesizen.fr',
-  password: 'Admin1234',
+  password: 'Admin123!',
 };
 
 const NEW_USER = {
@@ -23,8 +23,9 @@ test.describe('Administration des utilisateurs — Flujo completo', () => {
     await page.getByLabel('Email').fill(ADMIN.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
-    await page.waitForURL('/', { timeout: 10_000 });
-    await page.goto('/admin');
+    
+    // Esperar redirección al admin (el login hace router.push('/admin'))
+    await page.waitForURL('/admin', { timeout: 10_000 });
 
     // ── 2. Navegar a la gestión de usuarios ──
     await page.goto('/admin/users');

@@ -11,7 +11,7 @@ const USER = {
   name: 'Tracker User',
 };
 
-test.describe.skip('Tracker d\'émotions — Flujo completo (pages non implémentées dans cette version)', () => {
+test.describe.skip('Tracker E2E — pages non implémentées', () => {
   test.beforeAll(async ({ browser }) => {
     // Registrar usuario de prueba
     const page = await browser.newPage();

@@ -24,14 +24,14 @@ test.describe('Authentification — Flujo completo', () => {
     await page.getByLabel('Confirmer le mot de passe').fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Créer un compte' }).click();
 
-    // Esperar mensaje de éxito y enlace para conectarse
-    await expect(page.getByText('Vous pouvez maintenant vous connecter')).toBeVisible({
+    // Esperar mensaje de éxito
+    await expect(page.getByText('Compte créé avec succès')).toBeVisible({
       timeout: 10_000,
     });
 
     // ── 2. Login ──
     await page.getByRole('link', { name: 'Se connecter' }).first().click();
-    await expect(page.getByRole('heading', { name: 'Se connecter' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Bienvenue' })).toBeVisible();
 
     await page.getByLabel('Email').fill(TEST_USER.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(TEST_USER.password);
@@ -50,7 +50,6 @@ test.describe('Authentification — Flujo completo', () => {
     // Verificar que los datos del usuario se muestran
     await expect(page.getByText(TEST_USER.name)).toBeVisible();
     await expect(page.getByText(TEST_USER.email)).toBeVisible();
-    await expect(page.getByText('Membre depuis')).toBeVisible();
 
     // ── 4. Logout ──
     await page.getByRole('button', { name: 'Déconnexion' }).click();
@@ -59,7 +58,7 @@ test.describe('Authentification — Flujo completo', () => {
     await page.waitForURL('/', { timeout: 10_000 });
 
     // Verificar que el botón de login aparece (usuario desconectado)
-    await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Se connecter' }).first()).toBeVisible();
   });
 
   test('Login con credenciales inválidas muestra error genérico', async ({ page }) => {

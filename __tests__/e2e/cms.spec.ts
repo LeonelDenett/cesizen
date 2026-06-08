@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 // Credenciales admin (deben existir en la BD via seed o creación previa)
 const ADMIN = {
   email: 'admin@cesizen.fr',
-  password: 'Admin1234',
+  password: 'Admin123!',
 };
 
 const PAGE_TITLE = `Page E2E ${Date.now()}`;
@@ -21,8 +21,9 @@ test.describe('CMS — Flujo completo', () => {
     await page.getByLabel('Email').fill(ADMIN.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
-    await page.waitForURL('/', { timeout: 10_000 });
-    await page.goto('/admin');
+
+    // Esperar redirección al admin
+    await page.waitForURL('/admin', { timeout: 10_000 });
 
     // ── 2. Navegar a la gestión de páginas de información ──
     await page.goto('/admin/info-pages');
