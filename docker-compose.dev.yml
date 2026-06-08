@@ -38,11 +38,13 @@ services:
     volumes:
       - .:/app
       - node_modules:/app/node_modules
+      - secrets-data:/secrets
     environment:
       NODE_ENV: development
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-key-min-32-characters}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      SECRETS_DB_PATH: /secrets/secrets.db
     depends_on:
       db:
         condition: service_healthy
@@ -53,6 +55,8 @@ volumes:
   pgdata-dev:
     driver: local
   node_modules:
+    driver: local
+  secrets-data:
     driver: local
 
 networks:

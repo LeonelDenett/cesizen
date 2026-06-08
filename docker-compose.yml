@@ -58,6 +58,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-cesizen}
+      SECRETS_DB_PATH: /secrets/secrets.db
     depends_on:
       db:
         condition: service_healthy
@@ -78,8 +79,13 @@ services:
           cpus: '0.25'
           memory: 128M
 
+    volumes:
+      - secrets-data:/secrets
+
 volumes:
   pgdata-prod:
+    driver: local
+  secrets-data:
     driver: local
 
 networks:

@@ -43,6 +43,8 @@ services:
     restart: "no"
     ports:
       - "127.0.0.1:3001:3000"
+    volumes:
+      - secrets-data:/secrets
     environment:
       NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@db-test:5432/cesizen_test
@@ -51,6 +53,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: cesizen_test
+      SECRETS_DB_PATH: /secrets/secrets.db
     depends_on:
       db-test:
         condition: service_healthy
@@ -61,6 +64,8 @@ services:
 
 volumes:
   pgdata-test:
+    driver: local
+  secrets-data:
     driver: local
 
 networks:
