@@ -3,7 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, auditLogs } from "@/lib/db/schema";
+import logger from "@/lib/logger";
 
 declare module "next-auth" {
   interface Session {
@@ -39,22 +40,38 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
+        const getClientInfo = () => {
+          const h = (req as any)?.headers || {};
+          const getHeader = (name: string): string | undefined => {
+            if (typeof h.get === "function") return h.get(name) || undefined;
+            return h[name] || h[name.toLowerCase()] || undefined;
+          };
+          const forwarded = getHeader("x-forwarded-for");
+          return {
+            ip: forwarded ? forwarded.split(",")[0].trim() : getHeader("x-real-ip") || "unknown",
+            userAgent: getHeader("user-agent") || "unknown",
+          };
+        };
+
+        const { ip, userAgent } = getClientInfo();
+
         if (!credentials?.email || !credentials?.password) {
+          logger.warn({ action: "FAILED_LOGIN", ip }, "Missing credentials");
           return null;
         }
 
-        // Input validation
         const email = credentials.email.trim().toLowerCase();
         const password = credentials.password;
 
-        // Reject obviously invalid inputs
         if (email.length > 254 || password.length > 128 || password.length < 1) {
+          logger.warn({ action: "FAILED_LOGIN", email, ip }, "Invalid input length");
           return null;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
+          logger.warn({ action: "FAILED_LOGIN", email, ip }, "Invalid email format");
           return null;
         }
 
@@ -65,21 +82,57 @@ export const authOptions: AuthOptions = {
           .limit(1);
 
         if (!user) {
+          await db.insert(auditLogs).values({
+            action: "FAILED_LOGIN",
+            email,
+            ipAddress: ip,
+            userAgent,
+            success: false,
+            details: "User not found",
+          });
+          logger.warn({ action: "FAILED_LOGIN", email, ip }, "User not found");
           return null;
         }
 
         if (!user.isActive) {
+          await db.insert(auditLogs).values({
+            userId: user.id,
+            action: "ACCOUNT_DISABLED",
+            email: user.email,
+            ipAddress: ip,
+            userAgent,
+            success: false,
+            details: "Account is disabled",
+          });
+          logger.warn({ userId: user.id, action: "ACCOUNT_DISABLED", ip }, "Login on disabled account");
           throw new Error("ACCOUNT_DISABLED");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
-
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!isPasswordValid) {
+          await db.insert(auditLogs).values({
+            userId: user.id,
+            action: "FAILED_LOGIN",
+            email: user.email,
+            ipAddress: ip,
+            userAgent,
+            success: false,
+            details: "Invalid password",
+          });
+          logger.warn({ userId: user.id, action: "FAILED_LOGIN", ip }, "Invalid password");
           return null;
         }
+
+        await db.insert(auditLogs).values({
+          userId: user.id,
+          action: "LOGIN",
+          email: user.email,
+          ipAddress: ip,
+          userAgent,
+          success: true,
+          details: "Login successful",
+        });
+        logger.info({ userId: user.id, action: "LOGIN", ip }, "Login successful");
 
         return {
           id: user.id,
