@@ -30,7 +30,7 @@ test.describe('Authentification — Flujo completo', () => {
     });
 
     // ── 2. Login ──
-    await page.getByRole('link', { name: 'Se connecter' }).click();
+    await page.getByRole('link', { name: 'Se connecter' }).first().click();
     await expect(page.getByRole('heading', { name: 'Se connecter' })).toBeVisible();
 
     await page.getByLabel('Email').fill(TEST_USER.email);
