@@ -4,7 +4,9 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
+import { sqliteDb } from '@/lib/db/sqlite';
 import { users, passwordResetTokens } from '@/lib/db/schema';
+import { userPeppers } from '@/lib/db/schema/sqlite-secrets';
 import {
   registerSchema,
   resetPasswordRequestSchema,
@@ -50,13 +52,19 @@ export async function registerUser(
       };
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const pepper = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await bcrypt.hash(password + pepper, 12);
 
-    await db.insert(users).values({
+    const [newUser] = await db.insert(users).values({
       name,
       email,
       passwordHash,
       role: 'utilisateur',
+    }).returning();
+
+    await sqliteDb.insert(userPeppers).values({
+      userId: newUser.id,
+      pepper,
     });
 
     return {
@@ -173,14 +181,24 @@ export async function confirmPasswordReset(
 
     const resetToken = tokenResults[0];
 
-    // Hash new password with bcrypt cost 10
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Generate new pepper and hash with bcrypt cost 12
+    const newPepper = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await bcrypt.hash(password + newPepper, 12);
 
     // Update user password
     await db
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, resetToken.userId));
+
+    // Update or insert new pepper in SQLite
+    await sqliteDb
+      .insert(userPeppers)
+      .values({ userId: resetToken.userId, pepper: newPepper })
+      .onConflictDoUpdate({
+        target: userPeppers.userId,
+        set: { pepper: newPepper },
+      });
 
     // Mark token as used
     await db
