@@ -203,7 +203,7 @@ jobs:
   e2e:
     name: 🎭 Tests E2E (Playwright)
     runs-on: ubuntu-latest
-    needs: build  # Necesita el build compilado
+    needs: [lint, test-unit]  # Besoin du code propre et des tests OK
     services:
       postgres:
         image: postgres:16-alpine
@@ -231,17 +231,18 @@ jobs:
       - name: Installation des dépendances
         run: npm ci
 
-      - name: Récupération du build
-        uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: .
-
       - name: Configuration des variables d'environnement
         run: |
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5477/cesizen" >> $GITHUB_ENV
           echo "NEXTAUTH_SECRET=ci-secret-key-min-32-characters-long-string" >> $GITHUB_ENV
           echo "NEXTAUTH_URL=http://localhost:3333" >> $GITHUB_ENV
+
+      - name: Build de l'application pour E2E
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5477/cesizen
+          NEXTAUTH_SECRET: ci-secret-key-min-32-characters-long-string
+          NEXTAUTH_URL: http://localhost:3333
 
       - name: Exécution des migrations
         run: npx drizzle-kit migrate
