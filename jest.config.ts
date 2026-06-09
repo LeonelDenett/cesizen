@@ -19,7 +19,7 @@ const config: Config = {
     "!**/*.test.ts",
     "!**/*.spec.ts",
   ],
-  coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/", "/docs/", "/scripts/", "/lib/db/seed.ts", "/lib/db/migrations/"],
+  coveragePathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/", "/docs/", "/scripts/", "/lib/db/seed.ts", "/lib/db/migrations/", "/lib/db/schema/"],
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {
       "tsconfig": {
