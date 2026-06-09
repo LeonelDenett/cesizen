@@ -125,7 +125,26 @@ jobs:
           retention-days: 1
 
   # ============================================================================
-  # ÉTAPE 4 : SCAN DE SÉCURITÉ — Vérifier les vulnérabilités
+  # ÉTAPE 4 : SAST — SonarCloud (analyse statique de sécurité)
+  # ============================================================================
+  sonarqube:
+    name: 🔍 SonarCloud Scan
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Récupération du dépôt
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ============================================================================
+  # ÉTAPE 5 : SCAN DE SÉCURITÉ — Vérifier les vulnérabilités
   # ============================================================================
   security-scan:
     name: 🛡️ Scan de sécurité
@@ -164,7 +183,7 @@ jobs:
         if: always()
 
   # ============================================================================
-  # ÉTAPE 5 : DOCKER BUILD — Construire l'image Docker
+  # ÉTAPE 6 : DOCKER BUILD — Construire l'image Docker
   # ============================================================================
   docker-build:
     name: 🐳 Build image Docker
@@ -197,7 +216,7 @@ jobs:
         run: docker images | grep cesizen || echo "Image construite mais non listée (buildx cache) — normal"
 
   # ============================================================================
-  # ÉTAPE 6 : TESTS E2E — Playwright (tests avec navigateur)
+  # ÉTAPE 7 : TESTS E2E — Playwright (tests avec navigateur)
   # ============================================================================
   e2e:
     name: 🎭 Tests E2E (Playwright)
@@ -263,18 +282,18 @@ jobs:
         if: always()
 
   # ============================================================================
-  # ÉTAPE 7 : DÉPLOIEMENT — Seulement si tout le reste a fonctionné
+  # ÉTAPE 8 : DÉPLOIEMENT — Seulement si tout le reste a fonctionné
   # ============================================================================
   # Ce job est la "porte finale". Il attend :
-  #   needs: [lint, test-unit, build, e2e]
-  #     → Que ces 4 jobs terminent avec succès.
+  #   needs: [lint, test-unit, build, sonarqube, e2e]
+  #     → Que ces 5 jobs terminent avec succès.
   #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
   #     → S'exécute uniquement sur la branche "main" ou si déclenchement manuel.
   # ============================================================================
   deploy-demo:
     name: 🚀 Déploiement démo (GHCR)
     runs-on: ubuntu-latest
-    needs: [lint, test-unit, build, e2e]
+    needs: [lint, test-unit, build, sonarqube, e2e]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
