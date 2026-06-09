@@ -15,7 +15,7 @@ Ce ticket est un placeholder pour la prochaine tâche de sécurité à implémen
 
 ### 🟠 Haute
 5. **Augmenter le cost factor bcrypt à 12** — ✅ Fait (ticket précédent)
-6. **Intégrer SonarCloud dans la CI** — Scan SAST à chaque push
+6. **Intégrer SonarCloud dans la CI** — ✅ Fait (ticket #007)
 7. **Stabiliser les tests E2E** — ✅ Fait (ticket #005)
 8. **Activer les branch protection rules** sur `main` et `develop`
 9. **Créer le DoD** (`docs/definition-of-done.md`)
