@@ -21,7 +21,7 @@ export default defineConfig({
   // docker compose -f docker-compose.e2e.yml up -d
   // npm run dev (avec DATABASE_URL local)
   webServer: process.env.CI ? {
-    command: 'npm run build && npx drizzle-kit migrate && npx tsx lib/db/seed.ts && npm run start',
+    command: 'npm run build && npx drizzle-kit migrate && npx tsx scripts/seed-run.ts && npm run start',
     url: 'http://localhost:3333',
     timeout: 180_000,
   } : undefined,

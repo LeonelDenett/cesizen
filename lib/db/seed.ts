@@ -137,6 +137,17 @@ const BREATHING_EXERCISES_DATA = [
 ];
 
 export async function seed() {
+  // === PROTECTION CRITIQUE ===
+  // Le seed ne doit JAMAIS s'exécuter en production.
+  // Il contient des données de développement (utilisateurs demo, contenu test)
+  // qui écraseraient les données réelles des utilisateurs.
+  if (process.env.NODE_ENV === 'production') {
+    console.error("❌ ERREUR CRITIQUE : Le seed est interdit en production (NODE_ENV=production).");
+    console.error("   Le seed contient des données de développement qui écraseraient les données réelles.");
+    console.error("   En production, les données doivent être créées manuellement par un opérateur.");
+    throw new Error("SEED_PRODUCTION_BLOCKED: le seed est interdit en production");
+  }
+
   console.log("🌱 Seeding database...");
 
   try {
@@ -250,4 +261,4 @@ export async function seed() {
   }
 }
 
-seed().then(() => process.exit(0));
+

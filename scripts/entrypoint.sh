@@ -44,13 +44,16 @@ else
 fi
 
 # Seed (idempotent si possible)
+# ⚠️ PRODUCTION : le seed est désactivé dans le conteneur Docker.
+#    Le seed contient des données de développement (users demo, contenu test)
+#    qui écraseraient les données réelles en production.
+#    Pour l'initialisation en production, utilisez le script prod-init.sh
+#    Pour les environnements de développement, exécutez manuellement :
+#      npx tsx scripts/seed-run.ts
+#
 echo ""
-echo "🌱 Exécution du seed..."
-if npx tsx lib/db/seed.ts; then
-  echo "✅ Seed exécuté."
-else
-  echo "⚠️ Seed déjà présent ou erreur non bloquante."
-fi
+echo "⏭️  Seed ignoré en production (protégé par NODE_ENV)."
+echo "   En production, les données doivent être créées manuellement."
 
 echo ""
 echo "🚀 Lancement de CESIZen sur le port $PORT..."

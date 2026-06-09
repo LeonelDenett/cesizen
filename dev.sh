@@ -35,7 +35,7 @@ echo ""
 
 # Seed
 echo "🌱 Ejecutando seed..."
-npx tsx lib/db/seed.ts 2>/dev/null || echo "⚠️  Seed ya ejecutado o error en seed"
+npx tsx scripts/seed-run.ts 2>/dev/null || echo "⚠️  Seed ya ejecutado o error en seed"
 echo ""
 
 echo "═══════════════════════════════════════"

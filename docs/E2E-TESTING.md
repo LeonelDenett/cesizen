@@ -34,7 +34,7 @@ sleep 5
 DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen npx drizzle-kit migrate
 
 # 4. Insérer les données de test
-DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen npx tsx lib/db/seed.ts
+DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen npx tsx scripts/seed-run.ts
 
 # 5. Démarrer le serveur Next.js avec la base locale
 DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen \

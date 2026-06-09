@@ -80,6 +80,7 @@ Ces critères doivent être respectés **systématiquement**, quelle que soit la
 - [ ] L'**accessibilité** (a11y) est respectée (labels ARIA, contraste, navigation clavier)
 - [ ] Les **messages d'erreur** sont explicites et en français
 - [ ] Les **données de démo** (seed) sont cohérentes et ne contiennent pas de vraies données personnelles
+- [ ] Le **seed est bloqué en production** (vérification `NODE_ENV === 'production'`)
 
 ### 3.2 Bug / Correctif
 

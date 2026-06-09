@@ -37,7 +37,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5479/cesizen_test npx driz
 
 # ── 5. Seed ──
 echo -e "${YELLOW}🌱 Seedando datos...${NC}"
-DATABASE_URL=postgresql://postgres:postgres@localhost:5479/cesizen_test SECRETS_DB_PATH=./secrets.db npx tsx lib/db/seed.ts
+DATABASE_URL=postgresql://postgres:postgres@localhost:5479/cesizen_test SECRETS_DB_PATH=./secrets.db npx tsx scripts/seed-run.ts
 
 # ── 6. Levantar servidor en background ──
 echo -e "${YELLOW}🌐 Levantando servidor Next.js...${NC}"

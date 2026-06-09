@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "test:e2e:docker": "docker compose -f docker-compose.e2e.yml up -d --build && sleep 30 && npx playwright test && docker compose -f docker-compose.e2e.yml down -v",
     "test:e2e:local": "bash scripts/test-e2e-full.sh",
-    "db:seed": "npx tsx lib/db/seed.ts",
+    "db:seed": "npx tsx scripts/seed-run.ts",
     "db:reset": "npx tsx scripts/reset-db.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"

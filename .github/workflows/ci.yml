@@ -133,12 +133,12 @@ jobs:
     needs: [build]
     steps:
       - name: Récupération du dépôt
-        uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        uses: SonarSource/sonarqube-scan-action@
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -266,7 +266,7 @@ jobs:
         run: npx drizzle-kit migrate
 
       - name: Exécution du seed
-        run: npx tsx lib/db/seed.ts
+        run: npx tsx scripts/seed-run.ts
 
       - name: Installation des navigateurs Playwright
         run: npx playwright install --with-deps
