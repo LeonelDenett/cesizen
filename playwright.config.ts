@@ -1,11 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Load test environment variables for E2E
-process.env.DATABASE_URL = 'postgresql://postgres:changeme@localhost:5477/cesizen';
-process.env.NEXTAUTH_SECRET = 'cesizen-test-secret-key-2026';
-process.env.NEXTAUTH_URL = 'http://localhost:3000';
-process.env.SECRETS_DB_PATH = './secrets.db';
-
 export default defineConfig({
   testDir: './__tests__/e2e',
   fullyParallel: false,
@@ -23,10 +17,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: process.env.CI ? undefined : {
-    command: 'docker compose up db -d && sleep 5 && npx drizzle-kit migrate && npx tsx lib/db/seed.ts && DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen NEXTAUTH_SECRET=cesizen-test-secret-key-2026 NEXTAUTH_URL=http://localhost:3000 SECRETS_DB_PATH=./secrets.db npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
+  // En local, le serveur doit être lancé manuellement avec la base locale
+  // docker compose -f docker-compose.e2e.yml up -d
+  // npm run dev (avec DATABASE_URL local)
+  webServer: process.env.CI ? {
+    command: 'npm run build && npx drizzle-kit migrate && npx tsx lib/db/seed.ts && npm run start',
+    url: 'http://localhost:3333',
     timeout: 180_000,
-  },
+  } : undefined,
 });

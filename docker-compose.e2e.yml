@@ -1,10 +1,12 @@
 # =============================================================================
-# CESIZen - Docker Compose : Tests E2E / Recette
+# CESIZen - Docker Compose : Base de données pour tests E2E
 # =============================================================================
-# Entorno aislado para ejecutar tests E2E con Playwright.
+# Ce fichier ne contient QUE la base de données PostgreSQL.
+# L'application Next.js tourne en local avec "npm run dev".
+# 
 # Usage :
-#   docker compose -f docker-compose.e2e.yml up -d
-#   npm run test:e2e
+#   1. Démarrer la base : docker compose -f docker-compose.e2e.yml up -d
+#   2. Lancer le script : npm run test:e2e:env
 # =============================================================================
 
 services:
@@ -20,8 +22,6 @@ services:
       - "127.0.0.1:5479:5432"
     volumes:
       - pgdata-test:/var/lib/postgresql/data
-    networks:
-      - cesizen-test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d cesizen_test"]
       interval: 5s
@@ -29,39 +29,6 @@ services:
       retries: 5
       start_period: 5s
 
-  app-test:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        DATABASE_URL: postgresql://postgres:postgres@db-test:5432/cesizen_test
-        NEXTAUTH_SECRET: test-secret-key-for-e2e-only
-        NEXTAUTH_URL: http://localhost:3000
-    container_name: cesizen-app-test
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:3000:3000"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:postgres@db-test:5432/cesizen_test
-      NEXTAUTH_SECRET: test-secret-key-for-e2e-only
-      NEXTAUTH_URL: http://localhost:3000
-      SECRETS_DB_PATH: /secrets/secrets.db
-    depends_on:
-      db-test:
-        condition: service_healthy
-    networks:
-      - cesizen-test
-    volumes:
-      - secrets-data-test:/secrets
-    command: ["sh", "-c", "npx drizzle-kit migrate && npx tsx lib/db/seed.ts && npm run start"]
-
 volumes:
   pgdata-test:
     driver: local
-  secrets-data-test:
-    driver: local
-
-networks:
-  cesizen-test:
-    driver: bridge

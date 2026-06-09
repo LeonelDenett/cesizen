@@ -8,34 +8,13 @@ import { db } from "./index";
 import { sqliteDb } from "./sqlite";
 import {
   users,
-  emotionsLevel1,
-  emotionsLevel2,
   infoPages,
   menuItems,
-  emotionLogs,
   breathingExercises,
 } from "./schema";
 import { userPeppers } from "./schema/sqlite-secrets";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-
-const LEVEL1_EMOTIONS = [
-  { name: "Joie", displayOrder: 1 },
-  { name: "Colère", displayOrder: 2 },
-  { name: "Peur", displayOrder: 3 },
-  { name: "Tristesse", displayOrder: 4 },
-  { name: "Surprise", displayOrder: 5 },
-  { name: "Dégoût", displayOrder: 6 },
-];
-
-const LEVEL2_EMOTIONS: Record<string, string[]> = {
-  Joie: ["Fierté", "Contentement", "Enchantement", "Excitation", "Émerveillement", "Gratitude"],
-  Colère: ["Frustration", "Irritation", "Rage", "Ressentiment", "Agacement", "Hostilité"],
-  Peur: ["Inquiétude", "Anxiété", "Terreur", "Appréhension", "Panique", "Crainte"],
-  Tristesse: ["Chagrin", "Mélancolie", "Abattement", "Désespoir", "Solitude", "Dépression"],
-  Surprise: ["Étonnement", "Stupéfaction", "Sidération", "Incrédule", "Émerveillement", "Confusion"],
-  Dégoût: ["Répulsion", "Déplaisir", "Nausée", "Dédain", "Horreur", "Dégoût profond"],
-};
 
 const INFO_PAGES_DATA = [
   // ── Stress (existants) ──
@@ -161,40 +140,11 @@ export async function seed() {
   console.log("🌱 Seeding database...");
 
   try {
-    // ── 1. Émotions ──
-    const insertedLevel1 = await db
-      .insert(emotionsLevel1)
-      .values(LEVEL1_EMOTIONS)
-      .onConflictDoNothing({ target: emotionsLevel1.name })
-      .returning();
-
-    console.log(`✅ ${insertedLevel1.length} émotions niveau 1`);
-
-    // If emotions already existed, fetch them
-    let allLevel1 = insertedLevel1;
-    if (insertedLevel1.length === 0) {
-      allLevel1 = await db.select().from(emotionsLevel1);
-    }
-
-    for (const l1 of allLevel1) {
-      const level2Names = LEVEL2_EMOTIONS[l1.name];
-      if (!level2Names) continue;
-
-      const level2Values = level2Names.map((name, index) => ({
-        emotionLevel1Id: l1.id,
-        name,
-        displayOrder: index + 1,
-      }));
-
-      await db.insert(emotionsLevel2).values(level2Values).onConflictDoNothing();
-    }
-    console.log("✅ Émotions niveau 2");
-
-    // ── 2. Utilisateurs ──
+    // ── 1. Utilisateurs ──
     // Admin avec pepper unique
     const adminPepper = crypto.randomBytes(32).toString('hex');
     const adminHash = await bcrypt.hash("Admin1234!Secure" + adminPepper, 12);
-    await db
+    const [adminUser] = await db
       .insert(users)
       .values({
         name: "Administrateur",
@@ -202,13 +152,15 @@ export async function seed() {
         passwordHash: adminHash,
         role: "administrateur",
       })
-      .onConflictDoNothing({ target: users.email });
+      .onConflictDoUpdate({
+        target: users.email,
+        set: { passwordHash: adminHash },
+      })
+      .returning();
 
-    // Récupérer l'ID admin pour le pepper
-    const adminRows = await db.select().from(users).where(eq(users.email, "admin@cesizen.fr")).limit(1);
-    if (adminRows.length > 0) {
+    if (adminUser) {
       await sqliteDb.insert(userPeppers).values({
-        userId: adminRows[0].id,
+        userId: adminUser.id,
         pepper: adminPepper,
       }).onConflictDoUpdate({ target: userPeppers.userId, set: { pepper: adminPepper } });
     }
@@ -224,7 +176,10 @@ export async function seed() {
         passwordHash: userHash,
         role: "utilisateur",
       })
-      .onConflictDoNothing({ target: users.email })
+      .onConflictDoUpdate({
+        target: users.email,
+        set: { passwordHash: userHash },
+      })
       .returning();
 
     if (demoUser) {
@@ -236,7 +191,7 @@ export async function seed() {
 
     console.log("✅ Utilisateurs (admin@cesizen.fr / Admin1234!Secure, marie@cesizen.fr / User1234!Secure)");
 
-    // ── 3. Pages d'information ──
+    // ── 2. Pages d'information ──
     const existingPages = await db.select().from(infoPages);
     if (existingPages.length === 0) {
       const insertedPages = await db
@@ -246,7 +201,7 @@ export async function seed() {
 
       console.log(`✅ ${insertedPages.length} pages d'information`);
 
-      // ── 4. Menu items ──
+      // ── 3. Menu items ──
       const menuLabels: Record<string, string> = {
         "Qu'est-ce que le stress ?": 'Stress',
         'La gestion des émotions': 'Émotions',
@@ -279,104 +234,7 @@ export async function seed() {
       console.log("✅ Images mises à jour sur les pages existantes");
     }
 
-    // ── 5. Entrées du tracker (données de démo) ──
-    // Get the demo user (might have been created in a previous run)
-    let trackerUserId = demoUser?.id;
-    if (!trackerUserId) {
-      const [existing] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, "marie@cesizen.fr"))
-        .limit(1);
-      trackerUserId = existing?.id;
-    }
-
-    if (trackerUserId) {
-      const existingLogs = await db
-        .select()
-        .from(emotionLogs)
-        .where(eq(emotionLogs.userId, trackerUserId))
-        .limit(1);
-
-      if (existingLogs.length === 0) {
-        // Fetch all level2 emotions with their level1 parent
-        const allL2 = await db.select().from(emotionsLevel2);
-        const allL1 = await db.select().from(emotionsLevel1);
-
-        const l1Map = new Map(allL1.map((l) => [l.name, l.id]));
-        const l2ByParent = new Map<string, typeof allL2>();
-        for (const l2 of allL2) {
-          const list = l2ByParent.get(l2.emotionLevel1Id) || [];
-          list.push(l2);
-          l2ByParent.set(l2.emotionLevel1Id, list);
-        }
-
-        // Generate 30 days of emotion entries
-        const now = new Date();
-        const entries = [];
-
-        const emotionSequence = [
-          { l1: "Joie", l2idx: 0, note: "Belle journée ensoleillée" },
-          { l1: "Peur", l2idx: 1, note: "Examen demain, un peu stressée" },
-          { l1: "Joie", l2idx: 2, note: "Réussi mon examen !" },
-          { l1: "Tristesse", l2idx: 0, note: "Mon ami est parti" },
-          { l1: "Colère", l2idx: 0, note: "Retard de bus, encore..." },
-          { l1: "Joie", l2idx: 3, note: "Sortie entre amis" },
-          { l1: "Surprise", l2idx: 0, note: "Cadeau inattendu" },
-          { l1: "Peur", l2idx: 2, note: null },
-          { l1: "Joie", l2idx: 1, note: "Promenade au parc" },
-          { l1: "Tristesse", l2idx: 1, note: "Journée pluvieuse et mélancolique" },
-          { l1: "Colère", l2idx: 1, note: "Conflit au travail" },
-          { l1: "Joie", l2idx: 5, note: "Reconnaissante pour ma famille" },
-          { l1: "Dégoût", l2idx: 1, note: null },
-          { l1: "Surprise", l2idx: 5, note: "Perdue dans mes pensées" },
-          { l1: "Joie", l2idx: 0, note: "Promotion au travail !" },
-          { l1: "Peur", l2idx: 0, note: "Inquiète pour l'avenir" },
-          { l1: "Joie", l2idx: 4, note: "Coucher de soleil magnifique" },
-          { l1: "Colère", l2idx: 4, note: "Voisins bruyants" },
-          { l1: "Tristesse", l2idx: 4, note: "Sentiment de solitude" },
-          { l1: "Joie", l2idx: 1, note: "Bon repas en famille" },
-          { l1: "Peur", l2idx: 3, note: "Présentation orale demain" },
-          { l1: "Joie", l2idx: 3, note: "La présentation s'est bien passée" },
-          { l1: "Surprise", l2idx: 0, note: "Rencontre inattendue" },
-          { l1: "Tristesse", l2idx: 2, note: "Fatiguée et abattue" },
-          { l1: "Joie", l2idx: 0, note: "Fière de mes progrès" },
-          { l1: "Colère", l2idx: 2, note: null },
-          { l1: "Joie", l2idx: 1, note: "Journée calme et agréable" },
-          { l1: "Peur", l2idx: 4, note: "Moment de panique dans le métro" },
-          { l1: "Joie", l2idx: 2, note: "Film enchanteur au cinéma" },
-          { l1: "Surprise", l2idx: 1, note: "Nouvelle complètement inattendue" },
-        ];
-
-        for (let i = 0; i < emotionSequence.length; i++) {
-          const { l1, l2idx, note } = emotionSequence[i];
-          const l1Id = l1Map.get(l1);
-          if (!l1Id) continue;
-
-          const l2List = l2ByParent.get(l1Id);
-          if (!l2List || l2List.length === 0) continue;
-
-          const l2 = l2List[l2idx % l2List.length];
-          const logDate = new Date(now);
-          logDate.setDate(logDate.getDate() - (emotionSequence.length - i));
-
-          entries.push({
-            userId: trackerUserId,
-            emotionLevel1Id: l1Id,
-            emotionLevel2Id: l2.id,
-            logDate,
-            note,
-          });
-        }
-
-        await db.insert(emotionLogs).values(entries);
-        console.log(`✅ ${entries.length} entrées du tracker (marie@cesizen.fr)`);
-      } else {
-        console.log("⏭️  Entrées du tracker déjà existantes");
-      }
-    }
-
-    // ── 6. Exercices de respiration ──
+    // ── 4. Exercices de respiration ──
     const existingExercises = await db.select().from(breathingExercises).limit(1);
     if (existingExercises.length === 0) {
       await db.insert(breathingExercises).values(BREATHING_EXERCISES_DATA);

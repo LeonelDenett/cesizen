@@ -11,7 +11,7 @@
     "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":70,\"functions\":70,\"lines\":70,\"statements\":70}}'",
     "test:e2e": "playwright test",
     "test:e2e:docker": "docker compose -f docker-compose.e2e.yml up -d --build && sleep 30 && npx playwright test && docker compose -f docker-compose.e2e.yml down -v",
-    "test:e2e:local": "docker compose up db -d && sleep 3 && DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen npx drizzle-kit migrate && DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen npx tsx lib/db/seed.ts && DATABASE_URL=postgresql://postgres:changeme@localhost:5477/cesizen NEXTAUTH_SECRET=cesizen-test-secret-key-2026 NEXTAUTH_URL=http://localhost:3000 SECRETS_DB_PATH=./secrets.db playwright test",
+    "test:e2e:local": "bash scripts/test-e2e-full.sh",
     "db:seed": "npx tsx lib/db/seed.ts",
     "db:reset": "npx tsx scripts/reset-db.ts",
     "db:generate": "drizzle-kit generate",
