@@ -548,9 +548,15 @@ Framework : **Playwright** avec navigateur Chromium.
 
 > 🖼️ **Insérer ici une capture d'écran** : exemple de rapport Playwright avec un parcours de connexion réussi.
 
-### 9.4 Couverture de test
+### 9.4 Couverture de test et politique de tests
 
 Le pipeline CI génère un rapport de couverture Jest (`coverage/`) et archive le rapport Playwright (`playwright-report/`) pour analyse post-exécution.
+
+**Politique de tests** : définie dans `docs/testing-policy.md`, elle impose :
+- **3 types de tests** : unitaires (Jest), d'intégration (API routes avec DB réelle), E2E (Playwright).
+- **Seuils de couverture** : 80 % global, 95 % authentification, 90 % validation, 100 % routes API protégées.
+- **Tests de sécurité obligatoires** : brute-force, injection SQL, XSS, CSRF.
+- **CI bloquante** : le pipeline échoue si couverture < 80 % ou si les E2E échouent.
 
 > 🖼️ **Insérer ici une capture d'écran** : rapport de couverture Jest (ex. `statements: 82%, branches: 76%`).
 

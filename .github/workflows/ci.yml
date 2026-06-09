@@ -73,8 +73,8 @@ jobs:
       - name: Installation des dépendances
         run: npm ci
 
-      - name: Exécution des tests unitaires
-        run: npm run test -- --coverage
+      - name: Exécution des tests unitaires avec seuil de couverture
+        run: npm run test -- --coverage --coverageThreshold='{"global":{"branches":70,"functions":70,"lines":70,"statements":70}}'
 
       - name: Upload du rapport de couverture
         uses: actions/upload-artifact@v4
@@ -253,8 +253,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Lancement des tests E2E
-        run: npx playwright test || echo "Tests E2E en cours de stabilisation — voir ticket #004"
-        continue-on-error: true
+        run: npx playwright test
 
       - name: Upload du rapport Playwright
         uses: actions/upload-artifact@v4

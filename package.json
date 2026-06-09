@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
+    "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":70,\"functions\":70,\"lines\":70,\"statements\":70}}'",
     "test:e2e": "playwright test",
     "db:seed": "npx tsx lib/db/seed.ts",
     "db:reset": "npx tsx scripts/reset-db.ts",

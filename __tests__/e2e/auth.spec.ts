@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 const TEST_USER = {
   name: 'Test Utilisateur',
   email: `e2e-auth-${Date.now()}@test.com`,
-  password: 'TestPass1234',
+  password: 'TestPass1234!',
 };
 
 test.describe('Authentification — Flujo completo', () => {

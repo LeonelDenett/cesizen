@@ -7,13 +7,13 @@ import { test, expect } from '@playwright/test';
 
 const ADMIN = {
   email: 'admin@cesizen.fr',
-  password: 'Admin123!',
+  password: 'Admin1234!Secure',
 };
 
 const NEW_USER = {
   name: `User E2E ${Date.now()}`,
   email: `e2e-admin-${Date.now()}@test.com`,
-  password: 'UserTest1234',
+  password: 'UserTest1234!',
 };
 
 test.describe('Administration des utilisateurs — Flujo completo', () => {

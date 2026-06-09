@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 // Credenciales admin (deben existir en la BD via seed o creación previa)
 const ADMIN = {
   email: 'admin@cesizen.fr',
-  password: 'Admin123!',
+  password: 'Admin1234!Secure',
 };
 
 const PAGE_TITLE = `Page E2E ${Date.now()}`;
