@@ -332,9 +332,23 @@ jobs:
             NEXTAUTH_SECRET=build-placeholder
             NEXTAUTH_URL=http://localhost:3000
 
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag et push vers Docker Hub
+        run: |
+          docker pull ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }}
+          docker tag ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }} leoneldenettdev/cesizen:${{ github.sha }}
+          docker tag ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }} leoneldenettdev/cesizen:latest
+          docker push leoneldenettdev/cesizen:${{ github.sha }}
+          docker push leoneldenettdev/cesizen:latest
+
       - name: Résumé du déploiement
         run: |
-          echo "## 📦 Image poussée avec succès" >> $GITHUB_STEP_SUMMARY
-          echo "- **Registry** : ghcr.io" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**    : \`ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag latest** : \`ghcr.io/${{ env.OWNER_LOWER }}/cesizen:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Images poussées avec succès" >> $GITHUB_STEP_SUMMARY
+          echo "- **GHCR** : \`ghcr.io/${{ env.OWNER_LOWER }}/cesizen:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Hub** : \`leoneldenettdev/cesizen:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tags** : latest + SHA" >> $GITHUB_STEP_SUMMARY

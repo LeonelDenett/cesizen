@@ -33,7 +33,7 @@ git push origin v1.0.0
 
 ## 2. CI/CD — Pipeline GitHub Actions (Plan de déploiement — 6 pts)
 
-- [x] Fichier `.github/workflows/ci.yml` créé avec 7 jobs
+- [x] Fichier `.github/workflows/ci.yml` créé avec 8 jobs
 - [x] Pipeline déclenchée automatiquement sur push/PR vers `main` ou `develop`
 - [ ] **Vérifier que la pipeline passe** (jobs lint, test, build au minimum)
 - [x] Job Docker build + push vers GHCR configuré
@@ -55,7 +55,7 @@ git push origin v1.0.0
 **Commande de validation locale :**
 ```bash
 npm run test -- --coverage
-# Doit afficher : Test Suites: 6 passed, 51 passed
+# Doit afficher : Test Suites: 25 passed, 171 passed
 ```
 
 ---
@@ -145,7 +145,7 @@ curl http://127.0.0.1:3333/api/health
 
 - [ ] `docker compose down -v` puis `./scripts/deploy-local.sh` → tout fonctionne
 - [ ] `npm run lint` passe sans erreur
-- [ ] `npm run test` passe (51 tests)
+- [ ] `npm run test` passe (171 tests)
 - [ ] GitHub Actions est vert sur le dernier commit de `main`
 - [ ] Le site est accessible sur `http://127.0.0.1:3333`
 - [ ] Les 5 onglets du navigateur sont ouverts (repo, issues, project, actions, app locale)

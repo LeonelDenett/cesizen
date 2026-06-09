@@ -65,7 +65,7 @@ Nécessite un PostgreSQL local accessible via `DATABASE_URL`.
 
 ## Lancement en production (local / démonstration)
 
-Un script automatisé est fourni :
+### Option A : Script local (recommandé)
 
 ```bash
 ./scripts/deploy-local.sh
@@ -75,8 +75,6 @@ Ce script :
 - vérifie la présence du fichier `.env`,
 - lance `docker compose up --build -d`,
 - attend le démarrage et teste l'endpoint `/api/health`.
-
-Accès : [http://127.0.0.1:3333](http://127.0.0.1:3333) (ou le port défini dans `APP_PORT`).
 
 ### Arrêt
 
@@ -133,12 +131,24 @@ Le pipeline se déclenche sur :
 
 ### Image Docker
 
+**Actuellement sur GitHub Container Registry (GHCR)**
+
 ```bash
+# Pull depuis GitHub Container Registry
+docker pull ghcr.io/leoneldenett/cesizen:latest
+
 # Construction locale
 docker build -t cesizen:latest .
+```
 
-# Build + push (script fourni)
-PUSH=true ./scripts/build-and-push.sh
+**Perspectives — Docker Hub (futur)**
+
+```bash
+# Pull depuis Docker Hub (futur)
+docker pull leoneldenettdev/cesizen:latest
+
+# Déploiement en une ligne (futur)
+bash <(curl -fsSL https://raw.githubusercontent.com/LeonelDenett/cesizen/main/scripts/deploy.sh)
 ```
 
 ---

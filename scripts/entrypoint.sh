@@ -34,6 +34,23 @@ done
 
 echo "✅ PostgreSQL est disponible !"
 
+# Vérification de la base SQLite (secrets.db)
+# Cette base contient les peppers uniques des utilisateurs (ségrégation des secrets)
+SECRETS_DIR=$(dirname "$SECRETS_DB_PATH")
+if [ ! -d "$SECRETS_DIR" ]; then
+  echo "📁 Création du répertoire des secrets: $SECRETS_DIR"
+  mkdir -p "$SECRETS_DIR"
+fi
+
+if [ ! -f "$SECRETS_DB_PATH" ]; then
+  echo "⚠️  secrets.db non trouvé. Création d'une base vide..."
+  # La table sera créée automatiquement par sqlite.ts au démarrage
+  touch "$SECRETS_DB_PATH"
+  echo "✅ secrets.db initialisé."
+else
+  echo "✅ secrets.db trouvé."
+fi
+
 # Migrations
 echo ""
 echo "🔄 Exécution des migrations Drizzle..."
