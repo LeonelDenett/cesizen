@@ -1,3 +1,8 @@
+import { config } from 'dotenv';
+// Only load .env.local if DATABASE_URL is not already set (e.g., from command line)
+if (!process.env.DATABASE_URL) {
+  config({ path: '.env.local' });
+}
 import crypto from 'crypto';
 import { db } from "./index";
 import { sqliteDb } from "./sqlite";

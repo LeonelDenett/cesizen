@@ -49,4 +49,5 @@ test-results/
 /docs/todo.md
 server-e2e.log
 secrets.db
+secrets.db-*
 *.log

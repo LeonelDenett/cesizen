@@ -39,7 +39,7 @@ test.describe('Authentification — Parcours complet', () => {
 
     // Attendre la redirection vers la page d'accueil (utilisateur normal → /)
     await page.waitForURL('/', { timeout: 10_000 });
-    await expect(page.getByText('CESIZen')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Votre compagnon bien-être' }).first()).toBeVisible();
 
     // ── 3. Profil ──
     await page.goto('/profile');
