@@ -43,3 +43,10 @@ next-env.d.ts
 # Playwright
 playwright-report/
 test-results/
+
+# Work files (not to be committed)
+/docs/features.md
+/docs/todo.md
+server-e2e.log
+secrets.db
+*.log
