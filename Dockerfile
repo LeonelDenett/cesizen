@@ -14,6 +14,8 @@ RUN npm ci --ignore-scripts --prefer-offline
 
 # ---- Étape 3 : Builder ----
 FROM base AS builder
+# Outils de compilation nécessaires pour better-sqlite3 (bindings natifs)
+RUN apk add --no-cache python3 make g++ gcc libc-dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -27,12 +29,18 @@ ENV DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/cesizen}
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-build-time-secret-placeholder}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
 
+# Recompiler les bindings natifs (better-sqlite3 nécessite compilation pour Alpine)
+RUN npm rebuild better-sqlite3
+
 # Build de l'application Next.js en mode standalone
 RUN npm run build
 
 # ---- Étape 4 : Runner (production) ----
 FROM base AS runner
 ENV NODE_ENV=production
+
+# Outils de compilation nécessaires pour better-sqlite3 en runtime
+RUN apk add --no-cache python3 make g++ gcc libc-dev
 
 # Création d'un utilisateur non-root pour la sécurité
 RUN addgroup --system --gid 1001 nodejs && \
