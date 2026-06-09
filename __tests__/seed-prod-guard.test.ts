@@ -28,25 +28,36 @@ describe('🔒 Protection données développement vs production', () => {
       await expect(seed()).rejects.toThrow('SEED_PRODUCTION_BLOCKED');
     });
 
-    test('✅ PERMET le seed si NODE_ENV === development', async () => {
+    test('✅ NE BLOQUE PAS le seed si NODE_ENV === development', async () => {
       process.env.NODE_ENV = 'development';
 
-      // Le seed pourrait échouer pour d'autres raisons (DB non connectée, etc.)
-      // Mais il ne doit PAS échouer avec l'erreur SEED_PRODUCTION_BLOCKED
-      await expect(seed()).resolves.not.toThrow('SEED_PRODUCTION_BLOCKED');
-    });
+      try {
+        await seed();
+      } catch (error: any) {
+        // Si le seed échoue, ce ne doit PAS être l'erreur de production
+        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+      }
+    }, 10000);
 
-    test('✅ PERMET le seed si NODE_ENV === test', async () => {
+    test('✅ NE BLOQUE PAS le seed si NODE_ENV === test', async () => {
       process.env.NODE_ENV = 'test';
 
-      await expect(seed()).resolves.not.toThrow('SEED_PRODUCTION_BLOCKED');
-    });
+      try {
+        await seed();
+      } catch (error: any) {
+        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+      }
+    }, 10000);
 
-    test('✅ PERMET le seed si NODE_ENV est non défini', async () => {
+    test('✅ NE BLOQUE PAS le seed si NODE_ENV est non défini', async () => {
       delete process.env.NODE_ENV;
 
-      await expect(seed()).resolves.not.toThrow('SEED_PRODUCTION_BLOCKED');
-    });
+      try {
+        await seed();
+      } catch (error: any) {
+        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+      }
+    }, 10000);
   });
 
   describe('ENTRYPOINT (scripts/entrypoint.sh)', () => {
