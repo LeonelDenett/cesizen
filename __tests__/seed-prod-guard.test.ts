@@ -33,9 +33,9 @@ describe('🔒 Protection données développement vs production', () => {
 
       try {
         await seed();
-      } catch (error: any) {
+      } catch (error) {
         // Si le seed échoue, ce ne doit PAS être l'erreur de production
-        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+        expect((error as Error).message).not.toContain('SEED_PRODUCTION_BLOCKED');
       }
     }, 10000);
 
@@ -44,8 +44,8 @@ describe('🔒 Protection données développement vs production', () => {
 
       try {
         await seed();
-      } catch (error: any) {
-        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+      } catch (error) {
+        expect((error as Error).message).not.toContain('SEED_PRODUCTION_BLOCKED');
       }
     }, 10000);
 
@@ -54,8 +54,8 @@ describe('🔒 Protection données développement vs production', () => {
 
       try {
         await seed();
-      } catch (error: any) {
-        expect(error.message).not.toContain('SEED_PRODUCTION_BLOCKED');
+      } catch (error) {
+        expect((error as Error).message).not.toContain('SEED_PRODUCTION_BLOCKED');
       }
     }, 10000);
   });
