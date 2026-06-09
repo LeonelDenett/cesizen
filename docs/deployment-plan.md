@@ -179,7 +179,7 @@ Déclencheurs : push sur `main` / `develop`, Pull Request, manuel.
 | Job | Description | Résultat attendu |
 |-----|-------------|----------------|
 | 🔍 Lint | ESLint sur tout le code | Vert |
-| 🧪 Tests unitaires | Jest 51 tests + couverture | Vert |
+| 🧪 Tests unitaires | Jest 171 tests + couverture | Vert |
 | 🏗️ Build | `next build` en mode standalone | Vert |
 | 🛡️ Sécurité | `npm audit` + Trivy scan | Jaune (warnings OK) |
 | 🐳 Docker build | Construction de l'image | Vert |

@@ -19,7 +19,7 @@ Implémenter une politique de tests complète avec 3 types de tests (unitaires, 
 7. ✅ `.github/workflows/ci.yml` — E2E bloquants (`continue-on-error: false`)
 
 ## Résultat
-- **166 tests** passent, 0 échec
+- **171 tests** passent, 0 échec
 - Couverture globale : **85.59%** statements, 74.26% branches, 85.45% functions, 87.06% lines
 - Les tests API sont tous couverts à 85%+ (admin-breathing, breathing-*, favorites, menu-items, info-pages, users)
 
