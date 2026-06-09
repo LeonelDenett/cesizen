@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3333',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
   },
   projects: [
@@ -18,8 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: process.env.CI ? undefined : {
-    command: 'npm run dev -- -p 3333',
-    url: 'http://localhost:3333',
+    command: 'npm run db:seed && npm run dev',
+    url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 180_000,
   },

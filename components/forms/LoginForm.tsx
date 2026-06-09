@@ -16,10 +16,10 @@ export default function LoginForm() {
   function fillDemo(role: 'admin' | 'user') {
     if (role === 'admin') {
       setEmail('admin@cesizen.fr');
-      setPassword('Admin123!');
+      setPassword('Admin1234!Secure');
     } else {
       setEmail('marie@cesizen.fr');
-      setPassword('User1234');
+      setPassword('User1234!Secure');
     }
     setError('');
   }

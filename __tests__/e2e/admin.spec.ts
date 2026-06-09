@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * E2E: Flujo Login admin → Listar usuarios → Crear → Desactivar → Eliminar
- * Validates: Requirements 5.1, 5.2, 5.3, 5.4
+ * E2E : Parcours Connexion admin → Lister utilisateurs → Créer → Désactiver → Supprimer
+ * Valide : Requirements 5.1, 5.2, 5.3, 5.4
  */
 
 const ADMIN = {
@@ -16,29 +16,29 @@ const NEW_USER = {
   password: 'UserTest1234!',
 };
 
-test.describe('Administration des utilisateurs — Flujo completo', () => {
-  test('Login admin → Listar → Crear → Desactivar → Eliminar', async ({ page }) => {
-    // ── 1. Login como admin ──
+test.describe('Administration des utilisateurs — Parcours complet', () => {
+  test('Connexion admin → Lister → Créer → Désactiver → Supprimer', async ({ page }) => {
+    // ── 1. Connexion en tant qu'admin ──
     await page.goto('/login');
     await page.getByLabel('Email').fill(ADMIN.email);
     await page.getByLabel('Mot de passe', { exact: true }).fill(ADMIN.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
     
-    // Esperar redirección al admin (el login hace router.push('/admin'))
+    // Attendre la redirection vers l'admin (le login fait router.push('/admin'))
     await page.waitForURL('/admin', { timeout: 10_000 });
 
-    // ── 2. Navegar a la gestión de usuarios ──
+    // ── 2. Naviguer vers la gestion des utilisateurs ──
     await page.goto('/admin/users');
     await expect(page.getByRole('heading', { name: 'Utilisateurs' })).toBeVisible({
       timeout: 10_000,
     });
 
-    // Verificar que la lista de usuarios se muestra (tabla o cards)
+    // Vérifier que la liste des utilisateurs s'affiche (tableau ou cards)
     await expect(
       page.getByText('Nom').or(page.getByText(ADMIN.email))
     ).toBeVisible({ timeout: 10_000 });
 
-    // ── 3. Crear un nuevo usuario ──
+    // ── 3. Créer un nouvel utilisateur ──
     await page.getByRole('button', { name: 'Créer un utilisateur' }).click();
     await expect(page.getByRole('heading', { name: 'Nouveau utilisateur' })).toBeVisible();
 
@@ -48,32 +48,32 @@ test.describe('Administration des utilisateurs — Flujo completo', () => {
     await page.getByLabel('Mot de passe').fill(NEW_USER.password);
     await page.getByRole('button', { name: 'Créer' }).click();
 
-    // Verificar que el usuario aparece en la lista
+    // Vérifier que l'utilisateur apparaît dans la liste
     await expect(page.getByText(NEW_USER.name)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(NEW_USER.email)).toBeVisible();
 
-    // ── 4. Desactivar el usuario ──
-    // Encontrar la fila/card del usuario creado y clicar "Désactiver"
+    // ── 4. Désactiver l'utilisateur ──
+    // Trouver la ligne/card de l'utilisateur créé et cliquer "Désactiver"
     const userRow = page.getByText(NEW_USER.email).locator('..');
     await userRow.getByRole('button', { name: 'Désactiver' }).or(
       page.getByRole('button', { name: 'Désactiver' }).last()
     ).click();
 
-    // Verificar que el estado cambió a "Inactif"
+    // Vérifier que le statut a changé en "Inactif"
     await expect(page.getByText('Inactif')).toBeVisible({ timeout: 10_000 });
 
-    // ── 5. Eliminar el usuario con confirmación ──
-    // Clicar "Supprimer" para mostrar la confirmación
+    // ── 5. Supprimer l'utilisateur avec confirmation ──
+    // Cliquer "Supprimer" pour afficher la confirmation
     const userRowAfter = page.getByText(NEW_USER.email).locator('..');
     await userRowAfter.getByRole('button', { name: 'Supprimer' }).or(
       page.getByRole('button', { name: 'Supprimer' }).last()
     ).click();
 
-    // Confirmar la eliminación
+    // Confirmer la suppression
     await expect(page.getByText('Confirmer ?')).toBeVisible();
     await page.getByRole('button', { name: 'Oui' }).click();
 
-    // Verificar que el usuario desaparece de la lista
+    // Vérifier que l'utilisateur disparaît de la liste
     await expect(page.getByText(NEW_USER.email)).not.toBeVisible({ timeout: 10_000 });
   });
 });

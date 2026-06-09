@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * E2E: Flujo Registro → Login → Perfil → Logout
- * Validates: Requirements 1.1, 2.1, 3.1, 2.2
+ * E2E : Parcours Inscription → Connexion → Profil → Déconnexion
+ * Valide : Requirements 1.1, 2.1, 3.1, 2.2
  */
 
 const TEST_USER = {
@@ -11,9 +11,9 @@ const TEST_USER = {
   password: 'TestPass1234!',
 };
 
-test.describe('Authentification — Flujo completo', () => {
-  test('Registro → Login → Perfil → Logout', async ({ page }) => {
-    // ── 1. Registro ──
+test.describe('Authentification — Parcours complet', () => {
+  test('Inscription → Connexion → Profil → Déconnexion', async ({ page }) => {
+    // ── 1. Inscription ──
     await page.goto('/register');
     await expect(page.getByRole('heading', { name: 'Commencez votre voyage' })).toBeVisible();
 
@@ -24,12 +24,12 @@ test.describe('Authentification — Flujo completo', () => {
     await page.getByLabel('Confirmer le mot de passe').fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Créer un compte' }).click();
 
-    // Esperar mensaje de éxito
+    // Attendre le message de succès
     await expect(page.getByText('Compte créé avec succès')).toBeVisible({
       timeout: 10_000,
     });
 
-    // ── 2. Login ──
+    // ── 2. Connexion ──
     await page.getByRole('link', { name: 'Se connecter' }).first().click();
     await expect(page.getByRole('heading', { name: 'Bienvenue' })).toBeVisible();
 
@@ -37,31 +37,31 @@ test.describe('Authentification — Flujo completo', () => {
     await page.getByLabel('Mot de passe', { exact: true }).fill(TEST_USER.password);
     await page.getByRole('button', { name: 'Se connecter' }).click();
 
-    // Esperar redirección a la página principal (usuario normal → /)
+    // Attendre la redirection vers la page d'accueil (utilisateur normal → /)
     await page.waitForURL('/', { timeout: 10_000 });
     await expect(page.getByText('CESIZen')).toBeVisible();
 
-    // ── 3. Perfil ──
+    // ── 3. Profil ──
     await page.goto('/profile');
     await expect(page.getByRole('heading', { name: 'Mon profil' })).toBeVisible({
       timeout: 10_000,
     });
 
-    // Verificar que los datos del usuario se muestran
+    // Vérifier que les données de l'utilisateur s'affichent
     await expect(page.getByText(TEST_USER.name)).toBeVisible();
     await expect(page.getByText(TEST_USER.email)).toBeVisible();
 
-    // ── 4. Logout ──
+    // ── 4. Déconnexion ──
     await page.getByRole('button', { name: 'Déconnexion' }).click();
 
-    // Verificar redirección a la página pública
+    // Vérifier la redirection vers la page publique
     await page.waitForURL('/', { timeout: 10_000 });
 
-    // Verificar que el botón de login aparece (usuario desconectado)
+    // Vérifier que le bouton de connexion apparaît (utilisateur déconnecté)
     await expect(page.getByRole('link', { name: 'Se connecter' }).first()).toBeVisible();
   });
 
-  test('Login con credenciales inválidas muestra error genérico', async ({ page }) => {
+  test('Connexion avec identifiants invalides affiche une erreur générique', async ({ page }) => {
     await page.goto('/login');
 
     await page.getByLabel('Email').fill('inexistant@test.com');
