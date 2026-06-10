@@ -254,14 +254,14 @@ jobs:
         run: |
           echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5477/cesizen" >> $GITHUB_ENV
           echo "NEXTAUTH_SECRET=ci-secret-key-min-32-characters-long-string" >> $GITHUB_ENV
-          echo "NEXTAUTH_URL=http://localhost:3333" >> $GITHUB_ENV
+          echo "NEXTAUTH_URL=http://localhost:3000" >> $GITHUB_ENV
 
       - name: Build de l'application pour E2E
         run: npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5477/cesizen
           NEXTAUTH_SECRET: ci-secret-key-min-32-characters-long-string
-          NEXTAUTH_URL: http://localhost:3333
+            NEXTAUTH_URL: http://localhost:3000
 
       - name: Exécution des migrations
         run: npx drizzle-kit migrate
