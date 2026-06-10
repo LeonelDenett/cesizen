@@ -1,4 +1,4 @@
-# Tests E2E — Guide de lancement
+# Tests E2E — Guide de lancement.
 
 ## Prérequis
 
